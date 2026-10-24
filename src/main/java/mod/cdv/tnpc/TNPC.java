@@ -54,6 +54,7 @@ public class TNPC {
         NeoForge.EVENT_BUS.register(new mod.cdv.tnpc.campfire.CampfireEvents());
         NeoForge.EVENT_BUS.register(new mod.cdv.tnpc.entity.DamageEscapeEvents());
         NeoForge.EVENT_BUS.register(new mod.cdv.tnpc.offline.OfflineEvents());
+        NeoForge.EVENT_BUS.register(new mod.cdv.tnpc.travel.TravelEvents());
         EntityEvents.init(modEventBus);
         NeoForge.EVENT_BUS.register(this);
         NetworkManager.register(modEventBus);
@@ -69,6 +70,7 @@ public class TNPC {
         NpcBehaviorConfig.load(event.getServer());
         mod.cdv.tnpc.offline.OfflineConfig.load(event.getServer());
         mod.cdv.tnpc.quest.QuestConfig.load(event.getServer());
+        mod.cdv.tnpc.travel.TravelConfig.load(event.getServer());
         mod.cdv.tnpc.dialogue.NpcConversations.load(event.getServer());
     }
 
@@ -77,8 +79,11 @@ public class TNPC {
         mod.cdv.tnpc.offline.OfflineEvents.registerCommands(event);
         mod.cdv.tnpc.inventory.NpcInventoryCommands.register(event);
         mod.cdv.tnpc.quest.QuestCommands.register(event);
+        mod.cdv.tnpc.travel.TravelCommands.register(event);
         CommandDispatcher dispatcher = event.getDispatcher();
         dispatcher.register((LiteralArgumentBuilder)Commands.literal((String)"tacznpcs_reload").executes(context -> {
+            if (!mod.cdv.tnpc.travel.TravelConfig.load(context.getSource().getServer()))
+                context.getSource().sendFailure(Component.literal("Travel reload failed; previous settings retained."));
             TemplateDataManager.init(((CommandSourceStack)context.getSource()).getServer());
             if (!mod.cdv.tnpc.quest.QuestConfig.load(context.getSource().getServer()))
                 ((CommandSourceStack)context.getSource()).sendFailure(Component.literal("Could not reload NPC quests; keeping previous settings."));

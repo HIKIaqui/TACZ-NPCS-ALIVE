@@ -24,7 +24,8 @@ public final class OfflineConfig {
             "rest": { "enabled": true, "cost": 1, "weight": 1 },
             "meetAllies": { "enabled": true, "cost": 5, "weight": 1 },
             "loot": { "enabled": true, "cost": 2, "weight": 1 },
-            "share": { "enabled": true, "cost": 1, "weight": 1 }
+            "share": { "enabled": true, "cost": 1, "weight": 1 },
+            "move": { "enabled": true, "cost": 1, "weight": 1 }
           },
           "loadouts": {
             "villagers": { "offlineActions": { "share": { "weight": 2 } } },
@@ -53,7 +54,7 @@ public final class OfflineConfig {
     static Settings parse(JsonObject root) {
         Profile builtin = new Profile(true, Map.of("placeCampfire", new Action(true, 2, 1),
             "rest", new Action(true, 1, 1), "meetAllies", new Action(true, 5, 1),
-            "loot", new Action(true, 2, 1), "share", new Action(true, 1, 1)));
+            "loot", new Action(true, 2, 1), "share", new Action(true, 1, 1), "move", new Action(true, 1, 1)));
         Profile defaults = profile(object(root, "offlineActions"), builtin);
         Map<String, Profile> loadouts = new HashMap<>();
         for (var entry : object(root, "loadouts").entrySet())
@@ -67,7 +68,7 @@ public final class OfflineConfig {
             if (!id.equals("enabled") && !fallback.actions().containsKey(id))
                 throw new IllegalArgumentException("Unknown offline action: " + id);
         Map<String, Action> actions = new LinkedHashMap<>();
-        for (String id : List.of("placeCampfire", "rest", "meetAllies", "loot", "share")) {
+        for (String id : List.of("placeCampfire", "rest", "meetAllies", "loot", "share", "move")) {
             Action f = fallback.actions().get(id); JsonObject o = object(root, id);
             actions.put(id, new Action(bool(o, "enabled", f.enabled()), integer(o, "cost", f.cost(), 1, 1000000),
                 integer(o, "weight", f.weight(), 1, 1000)));

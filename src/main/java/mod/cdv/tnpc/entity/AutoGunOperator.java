@@ -373,6 +373,7 @@ implements IGunOperator {
     public void tick() {
         if (this.level() instanceof ServerLevel serverLevel) mod.cdv.tnpc.quest.NpcQuests.tick(this, serverLevel);
         if (this.level() instanceof ServerLevel serverLevel) this.offlineActions.tick(this, serverLevel);
+        if (this.isRemoved()) return;
         if (!this.level().isClientSide && (this.getTarget() != null || this.isOnFire())) this.becomeAlert();
         super.tick();
         this.onTickServerSide();
@@ -413,6 +414,8 @@ implements IGunOperator {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         this.offlineActions.save(tag);
+        tag.putLong(mod.cdv.tnpc.travel.NpcTravel.EPOCH, this.getPersistentData().getLong(mod.cdv.tnpc.travel.NpcTravel.EPOCH));
+        tag.putLong(mod.cdv.tnpc.travel.NpcTravel.ARRIVAL_COOLDOWN, this.getPersistentData().getLong(mod.cdv.tnpc.travel.NpcTravel.ARRIVAL_COOLDOWN));
         this.questState.save(tag);
         this.npcInventory.save(tag, this.registryAccess());
         tag.putLong("tnpcAlertUntil", this.awareness.alertUntil());
@@ -421,11 +424,14 @@ implements IGunOperator {
             tag.putBoolean("templateInitialized", true);
         }
         tag.put("skin", (Tag)this.entityData.get(SYNCED_SKIN));
+        if (this.level() instanceof ServerLevel serverLevel) mod.cdv.tnpc.travel.NpcTravel.saved(this, tag, serverLevel);
     }
 
     public void readAdditionalSaveData(CompoundTag tag) {
         Level level;
         super.readAdditionalSaveData(tag);
+        this.getPersistentData().putLong(mod.cdv.tnpc.travel.NpcTravel.EPOCH, tag.getLong(mod.cdv.tnpc.travel.NpcTravel.EPOCH));
+        this.getPersistentData().putLong(mod.cdv.tnpc.travel.NpcTravel.ARRIVAL_COOLDOWN, tag.getLong(mod.cdv.tnpc.travel.NpcTravel.ARRIVAL_COOLDOWN));
         this.npcInventory.load(tag, this.registryAccess());
         if (!this.level().isClientSide) mod.cdv.tnpc.quest.NpcQuests.load(this, tag);
         this.setPersistenceRequired();

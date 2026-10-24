@@ -20,3 +20,5 @@ config/tacznpc_loot/desert.json
 config/tacznpc_loot/snowy.json
 config/tacznpc_offline_actions.json
 config/tacznpc_structures.json
+VIAGENS.md
+config/tacznpc_travel.json

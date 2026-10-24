@@ -22,6 +22,10 @@ public final class OfflineActions {
     private String lastAction = "none";
     public OfflineWallet wallet() { return wallet; }
     public String lastAction() { return lastAction; }
+    public void travelPaid(long cost) {
+        if (!wallet.spend(cost)) throw new IllegalStateException("Travel payment unavailable");
+        lastAction = "move";
+    }
     public void initialize(ServerLevel level) {
         wallet.initialize(now(level), OfflineGrants.get(level.getServer()).total());
     }
@@ -72,6 +76,11 @@ public final class OfflineActions {
         for (String id : candidates) {
             roll -= profile.actions().get(id).weight(); if (roll < 0) { chosen = id; break; }
         }
+        // A trip pays for its full distance at arrival, not for each processing pass.
+        if (chosen.equals("move")) {
+            if (!mod.cdv.tnpc.travel.NpcTravel.depart(npc, level, false)) failures.merge(chosen, 1, Integer::sum);
+            return;
+        }
         boolean success = switch (chosen) {
             case "rest" -> { npc.setHealth(npc.getMaxHealth()); yield true; }
             case "placeCampfire" -> placeCampfire(npc, level);
@@ -89,6 +98,7 @@ public final class OfflineActions {
     }
     private boolean eligible(String id, AutoGunOperator npc) {
         return switch (id) {
+            case "move" -> npc.level() instanceof ServerLevel level && mod.cdv.tnpc.travel.NpcTravel.eligible(npc, level);
             case "rest" -> npc.getHealth() < npc.getMaxHealth();
             case "placeCampfire" -> NpcBehaviorConfig.campfireFor(npc.getTemplateId()).canCreate();
             case "meetAllies" -> !alliedLoadouts(npc).isEmpty();

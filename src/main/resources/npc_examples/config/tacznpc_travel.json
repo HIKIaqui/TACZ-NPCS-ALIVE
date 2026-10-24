@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "blocksPerPoint": 32.0,
+  "playerExclusionRadius": 64,
+  "intervalTicks": 20,
+  "recordsPerPass": 4,
+  "sitesPerRecord": 8,
+  "arrivalCooldownTicks": 1200
+}
