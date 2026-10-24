@@ -1,0 +1,85 @@
+{
+  "minecraft:pillager_outpost": [
+    {
+      "entities": [
+        "minecraft:pillager"
+      ],
+      "loadout": "illagers",
+      "chance": 0.25
+    }
+  ],
+  "minecraft:mansion": [
+    {
+      "entities": [
+        "minecraft:pillager",
+        "minecraft:vindicator"
+      ],
+      "loadout": "illagers",
+      "chance": 0.25
+    }
+  ],
+  "minecraft:village_plains": [
+    {
+      "entities": [
+        "minecraft:villager"
+      ],
+      "loadout": "villagers",
+      "chance": 0.05
+    },
+    {
+      "entities": [
+        "minecraft:iron_golem"
+      ],
+      "loadout": "villagers",
+      "chance": 0.5
+    }
+  ],
+  "minecraft:village_taiga": [
+    {
+      "entities": [
+        "minecraft:villager"
+      ],
+      "loadout": "villagers",
+      "chance": 0.05
+    },
+    {
+      "entities": [
+        "minecraft:iron_golem"
+      ],
+      "loadout": "villagers",
+      "chance": 0.5
+    }
+  ],
+  "minecraft:village_savanna": [
+    {
+      "entities": [
+        "minecraft:villager"
+      ],
+      "loadout": "villagers",
+      "chance": 0.05
+    },
+    {
+      "entities": [
+        "minecraft:iron_golem"
+      ],
+      "loadout": "villagers",
+      "chance": 0.5
+    }
+  ],
+  "minecraft:village_desert": [
+    {
+      "entities": [
+        "minecraft:villager"
+      ],
+      "loadout": "villagers",
+      "chance": 0.05
+    },
+    {
+      "entities": [
+        "minecraft:iron_golem"
+      ],
+      "loadout": "villagers",
+      "chance": 0.5
+    }
+  ]
+}

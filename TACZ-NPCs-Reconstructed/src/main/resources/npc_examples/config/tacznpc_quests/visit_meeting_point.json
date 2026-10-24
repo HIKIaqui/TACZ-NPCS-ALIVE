@@ -1,0 +1,16 @@
+{
+  "enabled": false,
+  "weight": 1,
+  "xp": 10,
+  "dimensions": ["minecraft:overworld"],
+  "acceptance": { "requireOutsideObjective": true },
+  "objective": {
+    "type": "poi",
+    "targets": ["minecraft:meeting"],
+    "poiRadius": 8,
+    "minTravelDistance": 32
+  },
+  "dialogues": {
+    "default": { "activity": ["I'm looking for a gathering place. Maybe someone there knows these parts."] }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "title": "Trade",
+  "subtitle": "Offers require real NPC stock.",
+  "offers": [
+    {
+      "id": "buy_supplies",
+      "title": "Buy supplies",
+      "cost": {
+        "item": "minecraft:emerald",
+        "count": 1
+      },
+      "result": {
+        "item": "minecraft:iron_ingot",
+        "count": 1
+      }
+    },
+    {
+      "id": "sell_supplies",
+      "title": "Sell supplies",
+      "cost": {
+        "item": "minecraft:iron_ingot",
+        "count": 1
+      },
+      "result": {
+        "item": "minecraft:emerald",
+        "count": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Conversation",
+  "start": "greeting",
+  "nodes": {
+    "greeting": {
+      "text": "Keep your hands where I can see them.",
+      "choices": [
+        {
+          "text": "Goodbye.",
+          "close": true
+        }
+      ]
+    }
+  }
+}

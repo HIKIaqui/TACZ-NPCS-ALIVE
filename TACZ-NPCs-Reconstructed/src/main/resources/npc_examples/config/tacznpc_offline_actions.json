@@ -1,0 +1,50 @@
+{
+  "ticksPerPoint": 1200,
+  "maxActionsPerTick": 16,
+  "nearbyNpcLimit": 8,
+  "populationRadius": 32,
+  "offlineActions": {
+    "enabled": true,
+    "placeCampfire": {
+      "enabled": true,
+      "cost": 2,
+      "weight": 1
+    },
+    "rest": {
+      "enabled": true,
+      "cost": 1,
+      "weight": 1
+    },
+    "meetAllies": {
+      "enabled": true,
+      "cost": 5,
+      "weight": 1
+    },
+    "loot": {
+      "enabled": true,
+      "cost": 2,
+      "weight": 1
+    },
+    "share": {
+      "enabled": true,
+      "cost": 1,
+      "weight": 1
+    }
+  },
+  "loadouts": {
+    "villagers": {
+      "offlineActions": {
+        "share": {
+          "weight": 2
+        }
+      }
+    },
+    "illagers": {
+      "offlineActions": {
+        "loot": {
+          "weight": 2
+        }
+      }
+    }
+  }
+}

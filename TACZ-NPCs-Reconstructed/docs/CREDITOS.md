@@ -1,0 +1,1 @@
+Base reconstruída de TacZ: NPCs 2.1.0, autor original Corbin Smith; licença MIT indicada no mod original. Aviel's Dialogue Mischiefs é uma dependência externa; seu código e JAR não estão incorporados nesta entrega.

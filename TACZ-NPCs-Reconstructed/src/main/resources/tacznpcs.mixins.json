@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "mod.cdv.tnpc.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "LevelChunkCampfireMixin",
+    "NpcTradeServiceMixin"
+  ],
+  "client": [
+    "DialogueScreenMixin",
+    "TradeScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

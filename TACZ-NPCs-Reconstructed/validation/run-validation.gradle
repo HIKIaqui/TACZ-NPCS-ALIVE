@@ -1,0 +1,46 @@
+// Optional isolated config validation: gradlew -I validation/run-validation.gradle validateBehaviorConfig
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    def compileValidation = project.tasks.register('compileBehaviorValidation', JavaCompile) {
+        dependsOn project.tasks.named('classes')
+        source project.fileTree('validation') { include '*.java' }
+        classpath = project.sourceSets.main.runtimeClasspath
+        destinationDirectory = project.layout.buildDirectory.dir('validation/classes')
+        javaCompiler = project.javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(21) }
+        options.encoding = 'UTF-8'
+    }
+    project.tasks.register('validateBehaviorConfig', JavaExec) {
+        dependsOn compileValidation
+        classpath = project.files(project.layout.buildDirectory.dir('validation/classes')) + project.sourceSets.main.runtimeClasspath
+        mainClass = 'BehaviorConfigSmokeTest'
+        javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    }
+}
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    project.tasks.register('validateDialogueConfig', JavaExec) {
+        dependsOn project.tasks.named('compileBehaviorValidation')
+        classpath = project.files(project.layout.buildDirectory.dir('validation/classes')) + project.sourceSets.main.runtimeClasspath
+        mainClass = 'DialogueConfigSmokeTest'
+        javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+        workingDir project.projectDir
+    }
+}
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    project.tasks.register('validateAdmCompatibility', JavaExec) {
+        dependsOn project.tasks.named('compileBehaviorValidation')
+        classpath = project.files(project.layout.buildDirectory.dir('validation/classes')) + project.sourceSets.main.runtimeClasspath
+        mainClass = 'AdmCompatibilitySmokeTest'
+        javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    }
+}
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    project.tasks.register('validateAwareness', JavaExec) {
+        dependsOn project.tasks.named('compileBehaviorValidation')
+        classpath = project.files(project.layout.buildDirectory.dir('validation/classes')) + project.sourceSets.main.runtimeClasspath
+        mainClass = 'AwarenessSmokeTest'
+        javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    }
+}

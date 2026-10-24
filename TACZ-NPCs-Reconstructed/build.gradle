@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+    id 'idea'
+}
+version = project.mod_version
+group = 'mod.cdv.tnpc'
+base { archivesName = 'tacznpcs' }
+java { toolchain.languageVersion = JavaLanguageVersion.of(21); withSourcesJar() }
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.kosmx.dev/' }
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+neoForge {
+    version = project.neo_version
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+    }
+    mods { tacznpcs { sourceSet(sourceSets.main) } }
+}
+dependencies {
+    // Use the exact TaCZ JAR from your modpack when placed in libs/.
+    def localTacz = fileTree(dir: 'libs', include: ['tacz-*.jar'], exclude: ['*-sources.jar'])
+    if (localTacz.files.size() > 1) throw new GradleException('Keep only ONE TaCZ JAR in libs/.')
+    if (localTacz.isEmpty()) {
+        implementation 'maven.modrinth:tacz-1.21.1:1.1.8-hotfix-r7'
+    } else {
+        implementation localTacz
+    }
+    implementation 'dev.kosmx.player-anim:player-animation-lib-forge:2.0.1+1.21.1'
+    implementation 'maven.modrinth:aviel-dialogue-mod:0.8.5'
+}
+processResources {
+    inputs.property 'mod_version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(mod_version: project.version)
+    }
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+idea { module { downloadSources = true } }

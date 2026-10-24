@@ -1,0 +1,18 @@
+{
+  "players": [
+    "minecraft:player"
+  ],
+  "villagers": [
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "minecraft:iron_golem"
+  ],
+  "illagers": [
+    "minecraft:pillager",
+    "minecraft:evoker",
+    "minecraft:vindicator",
+    "minecraft:illusioner",
+    "minecraft:ravager",
+    "minecraft:vex"
+  ]
+}

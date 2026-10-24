@@ -1,0 +1,38 @@
+{
+  "enabled": true,
+  "weight": 1,
+  "xp": 25,
+  "loadouts": [],
+  "excludedLoadouts": [],
+  "dimensions": ["minecraft:overworld"],
+  "acceptance": {
+    "requireOutsideObjective": true,
+    "excludedBiomes": [],
+    "excludedStructures": [],
+    "excludedPoiTypes": []
+  },
+  "objective": {
+    "type": "biome",
+    "targets": ["minecraft:plains"],
+    "poiRadius": 8,
+    "minTravelDistance": 32,
+    "excludedBiomes": [],
+    "excludedStructures": [],
+    "excludedPoiTypes": []
+  },
+  "dialogues": {
+    "default": {
+      "activity": ["I'm looking for open plains. I could use a clear view of what's around me."],
+      "news": ["I've heard there might be open country nearby. I'm still looking for it."]
+    },
+    "loadouts": {
+      "villagers": {
+        "activity": ["I'm looking for some open ground. Maybe a place to settle down someday."]
+      },
+      "illagers": {
+        "activity": ["None of your business."],
+        "news": ["If I learn something worth knowing, I'm keeping it to myself."]
+      }
+    }
+  }
+}

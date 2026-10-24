@@ -1,0 +1,62 @@
+{
+  "rest": {
+    "enabled": true,
+    "poiTypes": [
+      "minecraft:meeting"
+    ],
+    "searchRadius": 24,
+    "searchIntervalTicks": 100,
+    "chance": 0.5,
+    "minDurationTicks": 200,
+    "maxDurationTicks": 600,
+    "minCooldownTicks": 600,
+    "maxCooldownTicks": 1800,
+    "travelTimeoutTicks": 200,
+    "speed": 1.0,
+    "socialRadius": 6.0
+  },
+  "perception": {
+    "enabled": true,
+    "calmRange": 16.0,
+    "restingRange": 6.0,
+    "alertRange": 48.0,
+    "alertDurationTicks": 600,
+    "allyAlertRadius": 12.0
+  },
+  "damageEscape": {
+    "enabled": true,
+    "reactToAllies": true,
+    "durationTicks": 100,
+    "searchRadius": 12,
+    "minDistance": 4.0,
+    "speed": 1.3,
+    "repathIntervalTicks": 20
+  },
+  "campfire": {
+    "useAsRestPoi": true,
+    "canCreate": true,
+    "canLight": true,
+    "creationCooldownTicks": 2400,
+    "buildDurationTicks": 60,
+    "igniteDurationTicks": 40,
+    "requireSky": true
+  },
+  "campfires": {
+    "CampfiresExtinguishAfterTime": true,
+    "CampfiresTimeToExtinguish": 6000,
+    "maxResters": 4,
+    "minSpacing": 12
+  },
+  "loadouts": {
+    "villagers": {
+      "rest": {
+        "chance": 0.5
+      }
+    },
+    "illagers": {
+      "rest": {
+        "chance": 0.35
+      }
+    }
+  }
+}

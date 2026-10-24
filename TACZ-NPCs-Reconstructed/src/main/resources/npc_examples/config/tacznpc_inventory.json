@@ -1,0 +1,40 @@
+{
+  "defaults": {
+    "canTrade": true,
+    "tradeFile": "",
+    "interests": [],
+    "shareItems": true,
+    "shareChance": 0.1,
+    "shareCooldownTicks": 1200
+  },
+  "loadouts": {
+    "villagers": {
+      "interests": [
+        "minecraft:bread",
+        "minecraft:carrot",
+        "minecraft:apple",
+        "minecraft:emerald",
+        "minecraft:iron_ingot",
+        "minecraft:leather"
+      ]
+    },
+    "illagers": {
+      "interests": [
+        "minecraft:bread",
+        "minecraft:iron_ingot",
+        "minecraft:emerald",
+        "tacz:modern_kinetic_gun"
+      ]
+    }
+  },
+  "factionTrades": {
+    "villagers": "villagers.json",
+    "illagers": "illagers.json"
+  },
+  "genericTrades": {
+    "currency": "minecraft:emerald",
+    "quantity": 1,
+    "buyPrice": 1,
+    "sellPrice": 1
+  }
+}

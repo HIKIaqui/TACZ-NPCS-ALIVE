@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "checkIntervalTicks": 100,
+  "assignmentRetryTicks": 200,
+  "progression": {
+    "xpPerLevel": 100,
+    "healthPerLevel": 1,
+    "maxHealth": 30
+  }
+}

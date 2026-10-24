@@ -1,0 +1,49 @@
+{
+  "title": "Conversation",
+  "start": "greeting",
+  "nodes": {
+    "greeting": {
+      "text": "Need something?",
+      "choices": [
+        {
+          "text": "Any news around here?",
+          "next": "news"
+        },
+        {
+          "text": "What are you doing here?",
+          "next": "work"
+        },
+        {
+          "text": "Goodbye.",
+          "close": true
+        }
+      ]
+    },
+    "news": {
+      "text": "Nothing I can confirm. Keep your eyes open and watch your back.",
+      "choices": [
+        {
+          "text": "Anything else?",
+          "action": "back"
+        },
+        {
+          "text": "Stay safe.",
+          "close": true
+        }
+      ]
+    },
+    "work": {
+      "text": "Catching my breath. Then I'll see what the road brings.",
+      "choices": [
+        {
+          "text": "Another question.",
+          "action": "back"
+        },
+        {
+          "text": "See you around.",
+          "close": true
+        }
+      ]
+    }
+  }
+}

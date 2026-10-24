@@ -1,0 +1,14 @@
+{
+  "title": "Conversation",
+  "start": "greeting",
+  "nodes": {
+    "greeting": {
+      "text": "You can talk. Just keep your weapon down.",
+      "choices": [ { "text": "Tell me about your group.", "next": "faction" }, { "text": "Goodbye.", "close": true } ]
+    },
+    "faction": {
+      "text": "We look after our own. The rest depends on who is asking.",
+      "choices": [ { "text": "Another question.", "action": "back" }, { "text": "Understood.", "close": true } ]
+    }
+  }
+}

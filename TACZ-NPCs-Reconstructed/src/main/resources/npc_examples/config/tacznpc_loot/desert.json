@@ -1,0 +1,24 @@
+{
+  "biomes": ["minecraft:desert", "minecraft:badlands", "minecraft:eroded_badlands", "minecraft:wooded_badlands"],
+  "pools": [
+    {
+      "name": "desert_scrap",
+      "chance": 0.85,
+      "rolls": { "min": 1, "max": 2 },
+      "entries": [
+        { "item": "minecraft:iron_ingot", "weight": 4, "count": { "min": 1, "max": 2 } },
+        { "item": "minecraft:redstone", "weight": 3, "count": { "min": 1, "max": 4 } },
+        { "item": "minecraft:gold_nugget", "weight": 3, "count": { "min": 2, "max": 5 } },
+        { "item": "minecraft:bread", "weight": 2, "chance": 0.6 }
+      ]
+    },
+    {
+      "name": "abandoned_equipment",
+      "chance": 0.15,
+      "entries": [
+        { "item": "minecraft:iron_helmet", "weight": 3, "components": { "minecraft:damage": 30 } },
+        { "item": "tacz:modern_kinetic_gun", "weight": 1, "nbt": { "GunId": "tacz:ak47", "GunCurrentAmmoCount": 0 } }
+      ]
+    }
+  ]
+}

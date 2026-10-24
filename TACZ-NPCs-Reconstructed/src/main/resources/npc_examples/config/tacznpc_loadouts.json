@@ -1,0 +1,77 @@
+{
+  "illagers": {
+    "aligned": [
+      "illagers",
+      "monster"
+    ],
+    "opposed": [
+      "villagers"
+    ],
+    "equipment": {
+      "table": "tacznpcs:npc/illager",
+      "dropChances": {
+        "mainhand": 1,
+        "head": 0.2,
+        "chest": 0.2,
+        "legs": 0.2,
+        "feet": 0.2
+      }
+    },
+    "skin": [
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager2.png"
+      }
+    ]
+  },
+  "villagers": {
+    "aligned": [
+      "villagers"
+    ],
+    "opposed": [
+      "illagers",
+      "monster"
+    ],
+    "equipment": {
+      "table": "tacznpcs:npc/villager",
+      "dropChances": {
+        "mainhand": 1,
+        "head": 0.2,
+        "chest": 0.2,
+        "legs": 0.2,
+        "feet": 0.2
+      }
+    },
+    "skin": [
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager1.png"
+      }
+    ]
+  },
+  "default": {
+    "primary": "%tacz:glock_17",
+    "skin": {
+      "id": "tacznpcs:entity/default.png"
+    },
+    "opposed": [
+      "monster"
+    ]
+  }
+}

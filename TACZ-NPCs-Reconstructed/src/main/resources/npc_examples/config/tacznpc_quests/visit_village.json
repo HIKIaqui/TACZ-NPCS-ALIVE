@@ -1,0 +1,21 @@
+{
+  "enabled": false,
+  "weight": 1,
+  "xp": 50,
+  "dimensions": ["minecraft:overworld"],
+  "acceptance": { "requireOutsideObjective": true },
+  "objective": {
+    "type": "structure",
+    "targets": ["minecraft:village_plains", "minecraft:village_desert", "minecraft:village_savanna", "minecraft:village_snowy", "minecraft:village_taiga"],
+    "minTravelDistance": 64
+  },
+  "dialogues": {
+    "default": {
+      "activity": ["I'm looking for a settlement. Somewhere to trade and get some rest."],
+      "news": ["A settlement would be a better place to ask. That's where I'm hoping to go."]
+    },
+    "loadouts": {
+      "illagers": { "activity": ["I'm checking which settlements are still occupied."] }
+    }
+  }
+}

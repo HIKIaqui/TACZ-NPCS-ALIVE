@@ -1,0 +1,32 @@
+{
+  "enabled": true,
+  "maxDistance": 5,
+  "damageCooldownTicks": 100,
+  "maxDurationTicks": 2400,
+  "genericProfile": "generic",
+  "genericWhenUnmatched": true,
+  "rules": [
+    {
+      "id": "villagers_dialogue",
+      "enabled": true,
+      "priority": 100,
+      "profile": "villagers",
+      "genericMode": "append",
+      "when": {
+        "type": "tnpc.loadout",
+        "id": "villagers"
+      }
+    },
+    {
+      "id": "illagers_dialogue",
+      "enabled": true,
+      "priority": 100,
+      "profile": "illagers",
+      "genericMode": "append",
+      "when": {
+        "type": "tnpc.loadout",
+        "id": "illagers"
+      }
+    }
+  ]
+}

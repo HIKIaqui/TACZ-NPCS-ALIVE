@@ -1,0 +1,15 @@
+{
+  "title": "Conversation",
+  "start": "greeting",
+  "nodes": {
+    "greeting": {
+      "text": "We are gathering supplies for the village.",
+      "choices": [
+        {
+          "text": "Goodbye.",
+          "close": true
+        }
+      ]
+    }
+  }
+}
