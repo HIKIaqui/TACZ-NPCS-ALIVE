@@ -15,9 +15,12 @@ public final class CombatAim {
         }
         return points.getLast().spreadMultiplier();
     }
-    /** Uniform angular disk around the aim direction, plus TaCZ's untouched weapon dispersion. */
+    /** Uniform angular disk around the aim direction, with an optional experience multiplier; native weapon spread is handled separately. */
     public static Offset offset(CombatSettings.Profile profile, double distance, double radiusRoll, double angleRoll) {
-        double radius = profile.baseAimErrorDegrees() * multiplier(profile, distance) * Math.sqrt(radiusRoll);
+        return offset(profile, distance, radiusRoll, angleRoll, 1);
+    }
+    public static Offset offset(CombatSettings.Profile profile, double distance, double radiusRoll, double angleRoll, double levelMultiplier) {
+        double radius = Math.min(45, profile.baseAimErrorDegrees() * multiplier(profile, distance) * levelMultiplier) * Math.sqrt(radiusRoll);
         double angle = angleRoll * Math.PI * 2;
         return new Offset((float)(Math.sin(angle) * radius), (float)(Math.cos(angle) * radius));
     }

@@ -12,16 +12,30 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 public final class QuestConfig {
-    public record Progression(int xpPerLevel, double healthPerLevel, double maxHealth) {
+    public record Accuracy(double levelZeroMultiplier, double reductionPerLevel, double minimumMultiplier) {
+        public double multiplier(long level) {
+            return Math.max(minimumMultiplier, levelZeroMultiplier / (1 + Math.max(0, level) * reductionPerLevel));
+        }
+    }
+    public static final Accuracy DEFAULT_AIM = new Accuracy(2, .5, .35);
+    public static final Accuracy DEFAULT_SPREAD = new Accuracy(1.5, .25, .6);
+    public record Progression(int xpPerLevel, double healthPerLevel, double maxHealth,
+                              Accuracy aimError, Accuracy weaponSpread) {
+        public Progression(int xpPerLevel, double healthPerLevel, double maxHealth) {
+            this(xpPerLevel, healthPerLevel, maxHealth, DEFAULT_AIM, DEFAULT_SPREAD);
+        }
+        public long xpForLevel(int level) { return (long)level * xpPerLevel; }
         public long level(long xp) { return Math.max(0, xp) / xpPerLevel; }
         public double bonus(long xp, double baseHealth) {
             return Math.min(Math.max(0, maxHealth - baseHealth), level(xp) * healthPerLevel);
         }
     }
     public record Settings(boolean enabled, int checkIntervalTicks, int assignmentRetryTicks,
-        Progression progression, Map<String, QuestDefinition> quests, boolean needsStructures, int poiRadius) {}
+        Progression progression, Map<String, QuestDefinition> quests, boolean needsStructures, int poiRadius, Map<String, Integer> minSpawnLevels) {
+        public int minSpawnLevel(String loadout) { return minSpawnLevels.getOrDefault(loadout, 0); }
+    }
     private static volatile Settings current = new Settings(true, 100, 200,
-        new Progression(100, 1, 30), Map.of(), false, -1);
+        new Progression(100, 1, 30), Map.of(), false, -1, Map.of("military", 2));
     private QuestConfig() {}
     public static Settings settings() { return current; }
 
@@ -65,11 +79,18 @@ public final class QuestConfig {
         return parse(JsonParser.parseString(Files.readString(master)).getAsJsonObject(), definitions);
     }
     public static Settings parse(JsonObject root, Map<String, JsonObject> definitions) {
-        keys(root, "settings", "enabled", "checkIntervalTicks", "assignmentRetryTicks", "progression");
+        keys(root, "settings", "enabled", "checkIntervalTicks", "assignmentRetryTicks", "progression", "loadouts");
         JsonObject p = object(root, "progression");
-        keys(p, "progression", "xpPerLevel", "healthPerLevel", "maxHealth");
+        keys(p, "progression", "xpPerLevel", "healthPerLevel", "maxHealth", "aimError", "weaponSpread");
         Progression progression = new Progression(integer(p, "xpPerLevel", 100, 1, 1000000),
-            number(p, "healthPerLevel", 1, 0, 100), number(p, "maxHealth", 30, 1, 1024));
+            number(p, "healthPerLevel", 1, 0, 100), number(p, "maxHealth", 30, 1, 1024),
+            accuracy(object(p, "aimError"), DEFAULT_AIM), accuracy(object(p, "weaponSpread"), DEFAULT_SPREAD));
+        Map<String, Integer> spawnLevels = new TreeMap<>(Map.of("military", 2));
+        for (var entry : object(root, "loadouts").entrySet()) {
+            if (entry.getKey().isBlank()) throw new IllegalArgumentException("Blank loadout ID");
+            var value = entry.getValue().getAsJsonObject(); keys(value, "loadout", "minSpawnLevel");
+            spawnLevels.put(entry.getKey(), integer(value, "minSpawnLevel", 0, 0, 1000000));
+        }
         Map<String, QuestDefinition> quests = new TreeMap<>();
         boolean structures = false; int radius = -1; long totalWeight = 0;
         if (definitions.size() > 1024) throw new IllegalArgumentException("At most 1024 quest files are supported");
@@ -90,7 +111,16 @@ public final class QuestConfig {
         if (totalWeight > Integer.MAX_VALUE) throw new IllegalArgumentException("Quest weights overflow");
         return new Settings(bool(root, "enabled", true), integer(root, "checkIntervalTicks", 100, 20, 12000),
             integer(root, "assignmentRetryTicks", 200, 20, 72000), progression,
-            Collections.unmodifiableMap(quests), structures, radius);
+            Collections.unmodifiableMap(quests), structures, radius, Map.copyOf(spawnLevels));
+    }
+    private static Accuracy accuracy(JsonObject o, Accuracy fallback) {
+        keys(o, "accuracy", "levelZeroMultiplier", "reductionPerLevel", "minimumMultiplier");
+        var result = new Accuracy(number(o, "levelZeroMultiplier", fallback.levelZeroMultiplier(), 0, 4),
+            number(o, "reductionPerLevel", fallback.reductionPerLevel(), 0, 10),
+            number(o, "minimumMultiplier", fallback.minimumMultiplier(), 0, 4));
+        if (result.minimumMultiplier() > result.levelZeroMultiplier())
+            throw new IllegalArgumentException("minimumMultiplier exceeds levelZeroMultiplier");
+        return result;
     }
     private static QuestDefinition definition(String id, JsonObject root) {
         keys(root, id, "enabled", "weight", "xp", "loadouts", "excludedLoadouts", "dimensions", "acceptance", "objective", "dialogues");

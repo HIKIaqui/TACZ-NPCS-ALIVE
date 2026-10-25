@@ -20,6 +20,8 @@ public final class QuestCommands {
                     var state = npc.getQuestState(); var active = state.active();
                     String message = npc.getUUID() + " [" + npc.getTemplateId() + "] quest=" + (active == null ? "none" : active.id())
                         + ", xp=" + state.xp() + ", level=" + QuestConfig.settings().progression().level(state.xp())
+                        + ", aimErrorMultiplier=" + QuestConfig.settings().progression().aimError().multiplier(NpcQuests.level(npc))
+                        + ", weaponSpreadMultiplier=" + QuestConfig.settings().progression().weaponSpread().multiplier(NpcQuests.level(npc))
                         + ", health=" + npc.getHealth() + "/" + npc.getMaxHealth() + ", completed=" + state.completedCount()
                         + ", lastCompleted=" + state.lastCompleted()
                         + (active == null ? "" : ", instance=" + active.serial() + ", origin=" + active.dimension() + " " + active.origin().toShortString());

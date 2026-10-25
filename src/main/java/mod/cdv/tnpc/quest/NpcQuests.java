@@ -61,6 +61,14 @@ public final class NpcQuests {
         return place.complete() && definition.eligible(npc.getTemplateId(), place)
             && npc.getQuestState().assign(id, place, level.getServer().overworld().getGameTime());
     }
+    public static long level(AutoGunOperator npc) {
+        return QuestConfig.settings().progression().level(npc.getQuestState().xp());
+    }
+    public static void initializeLevel(AutoGunOperator npc) {
+        var settings = QuestConfig.settings();
+        long required = settings.progression().xpForLevel(settings.minSpawnLevel(npc.getTemplateId()));
+        if (npc.getQuestState().xp() < required) addXp(npc, required - npc.getQuestState().xp());
+    }
     public static void addXp(AutoGunOperator npc, long amount) {
         npc.getQuestState().addXp(amount); applyHealth(npc, true);
     }

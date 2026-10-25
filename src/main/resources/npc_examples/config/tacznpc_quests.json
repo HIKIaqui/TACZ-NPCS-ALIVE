@@ -5,6 +5,21 @@
   "progression": {
     "xpPerLevel": 100,
     "healthPerLevel": 1,
-    "maxHealth": 30
+    "maxHealth": 30,
+    "aimError": {
+      "levelZeroMultiplier": 2,
+      "reductionPerLevel": 0.5,
+      "minimumMultiplier": 0.35
+    },
+    "weaponSpread": {
+      "levelZeroMultiplier": 1.5,
+      "reductionPerLevel": 0.25,
+      "minimumMultiplier": 0.6
+    }
+  },
+  "loadouts": {
+    "military": {
+      "minSpawnLevel": 2
+    }
   }
 }

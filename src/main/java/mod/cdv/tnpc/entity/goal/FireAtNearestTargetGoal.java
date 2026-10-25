@@ -153,7 +153,9 @@ extends Goal {
                     this.attackBurst = ((AutoGunOperator)(this.mob)).getStateBurst();
                 }
             } else if (this.gunState == GunState.READY_TO_ATTACK && combat.mayFire(livingentity.getUUID(), flag, now)) {
-                var error = mod.cdv.tnpc.entity.ai.CombatAim.offset(profile, Math.sqrt(d0), mob.getRandom().nextDouble(), mob.getRandom().nextDouble());
+                var error = mod.cdv.tnpc.entity.ai.CombatAim.offset(profile, Math.sqrt(d0), mob.getRandom().nextDouble(), mob.getRandom().nextDouble(),
+                    mod.cdv.tnpc.quest.QuestConfig.settings().progression().aimError().multiplier(
+                        mod.cdv.tnpc.quest.NpcQuests.level(mob)));
                 float pitch = Math.max(-89.9f, Math.min(89.9f, mob.getViewXRot(1.0f) + error.pitch()));
                 float yaw = mob.getViewYRot(1.0f) + error.yaw();
                 // Stable suppliers: repeated reads/pellets share the same NPC aim centre.

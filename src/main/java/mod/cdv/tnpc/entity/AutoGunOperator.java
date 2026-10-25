@@ -450,6 +450,8 @@ implements IGunOperator {
         this.templateId = templateTag;
         this.templateInitialized = true;
         if (!(tag.contains("templateInitialized") && tag.getBoolean("templateInitialized") || !((level = this.level()) instanceof ServerLevel))) {
+            // Only fresh template initialization receives starting experience. Saved NPCs keep their XP.
+            mod.cdv.tnpc.quest.NpcQuests.initializeLevel(this);
             Level level2;
             ServerLevel sv = (ServerLevel)level;
             if (this.template.equipment() != null && (level2 = this.level()) instanceof ServerLevel) {
@@ -690,7 +692,8 @@ implements IGunOperator {
     }
 
     public ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw, long timestamp) {
-        return this.tacz$shoot.shoot(pitch, yaw, timestamp);
+        return mod.cdv.tnpc.entity.ai.NpcWeaponSpread.shoot(this,
+            () -> this.tacz$shoot.shoot(pitch, yaw, timestamp));
     }
 
     public boolean needCheckAmmo() {
