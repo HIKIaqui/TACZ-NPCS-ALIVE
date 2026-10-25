@@ -58,5 +58,118 @@
         "chance": 0.35
       }
     }
+  },
+  "combat": {
+    "reactionTimeTicks": {
+      "min": 10,
+      "max": 24
+    },
+    "targetMemoryTicks": 40,
+    "aimDistance": 10,
+    "baseAimErrorDegrees": 0.6,
+    "accuracyByDistance": [
+      {
+        "distance": 0,
+        "spreadMultiplier": 1
+      },
+      {
+        "distance": 15,
+        "spreadMultiplier": 1.4
+      },
+      {
+        "distance": 35,
+        "spreadMultiplier": 2.5
+      },
+      {
+        "distance": 60,
+        "spreadMultiplier": 4
+      }
+    ],
+    "shotIntervalTicks": {
+      "min": 2,
+      "max": 4
+    },
+    "burstShots": {
+      "min": 1,
+      "max": 2
+    },
+    "burstPauseTicks": {
+      "min": 18,
+      "max": 36
+    },
+    "weapons": {
+      "pistol": {
+        "shotIntervalTicks": {
+          "min": 4,
+          "max": 8
+        },
+        "burstPauseTicks": {
+          "min": 16,
+          "max": 32
+        }
+      },
+      "smg": {
+        "shotIntervalTicks": {
+          "min": 2,
+          "max": 4
+        },
+        "burstShots": {
+          "min": 1,
+          "max": 3
+        },
+        "burstPauseTicks": {
+          "min": 20,
+          "max": 36
+        }
+      },
+      "mg": {
+        "shotIntervalTicks": {
+          "min": 2,
+          "max": 4
+        },
+        "burstShots": {
+          "min": 1,
+          "max": 3
+        },
+        "burstPauseTicks": {
+          "min": 24,
+          "max": 44
+        }
+      },
+      "sniper": {
+        "shotIntervalTicks": {
+          "min": 0,
+          "max": 0
+        },
+        "burstShots": {
+          "min": 1,
+          "max": 1
+        },
+        "burstPauseTicks": {
+          "min": 40,
+          "max": 70
+        }
+      },
+      "shotgun": {
+        "burstShots": {
+          "min": 1,
+          "max": 1
+        },
+        "burstPauseTicks": {
+          "min": 28,
+          "max": 48
+        }
+      },
+      "rpg": {
+        "burstShots": {
+          "min": 1,
+          "max": 1
+        },
+        "burstPauseTicks": {
+          "min": 50,
+          "max": 90
+        }
+      }
+    }
   }
 }

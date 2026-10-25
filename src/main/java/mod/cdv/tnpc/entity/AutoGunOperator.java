@@ -252,6 +252,8 @@ implements IGunOperator {
     public void setTarget(@javax.annotation.Nullable LivingEntity target) {
         LivingEntity before = this.getTarget();
         super.setTarget(target);
+        if (!this.level().isClientSide && this.fireAtNearestTargetGoal != null && this.awareness != null && this.getTarget() != before)
+            this.fireAtNearestTargetGoal.targetChanged(this.getTarget());
         // Use the actual target: NeoForge can replace/cancel the requested target.
         if (!this.level().isClientSide && this.awareness != null && this.getTarget() != null && this.getTarget() != before)
             this.becomeAlert();
@@ -368,6 +370,12 @@ implements IGunOperator {
             }
         }
         return super.mobInteract(player, hand);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        if (this.fireAtNearestTargetGoal != null) this.fireAtNearestTargetGoal.observeTarget();
     }
 
     public void tick() {
@@ -559,33 +567,19 @@ implements IGunOperator {
         return null;
     }
 
+    public String combatGunType() {
+        GunTabType type = this.heldGunType();
+        return type == null ? "default" : type.name().toLowerCase(java.util.Locale.ROOT);
+    }
+
     public int getStateRangedCooldown() {
-        if (this.heldGunType() != null) {
-            return switch (this.heldGunType()) {
-                case GunTabType.RIFLE -> 2;
-                case GunTabType.PISTOL -> 3;
-                case GunTabType.SNIPER -> 8;
-                case GunTabType.SHOTGUN -> 5;
-                case GunTabType.SMG -> 2;
-                case GunTabType.MG -> 4;
-                case GunTabType.RPG -> 12;
-                default -> 5;
-            };
-        }
-        return 5;
+        return mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(this.templateId).weapon(combatGunType())
+            .burstPauseTicks().sample(this.random::nextInt);
     }
 
     public int getStateBurst() {
-        if (this.heldGunType() != null) {
-            return switch (this.heldGunType()) {
-                case GunTabType.SNIPER, GunTabType.SHOTGUN, GunTabType.RPG -> 1;
-                case GunTabType.RIFLE -> this.random.nextInt(1, 3);
-                case GunTabType.PISTOL -> this.random.nextInt(1, 3);
-                case GunTabType.SMG, GunTabType.MG -> this.random.nextInt(1, 4);
-                default -> 1;
-            };
-        }
-        return 1;
+        return mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(this.templateId).weapon(combatGunType())
+            .burstShots().sample(this.random::nextInt);
     }
 
     protected void reduceAmmo(ItemStack currentGunItem, ModernKineticGunItem gunitem) {

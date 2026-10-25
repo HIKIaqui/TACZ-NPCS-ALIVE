@@ -17,6 +17,19 @@ public class FireAtNearestTargetGoal<T extends AutoGunOperator>
 extends Goal {
     public static final UniformInt PATHFINDING_DELAY_RANGE = TimeUtil.rangeOfSeconds((int)1, (int)2);
     private final T mob;
+    private final mod.cdv.tnpc.entity.ai.CombatMemory combat = new mod.cdv.tnpc.entity.ai.CombatMemory();
+    public mod.cdv.tnpc.entity.ai.CombatMemory combatMemory() { return combat; }
+    public void targetChanged(LivingEntity target) {
+        combat.acquired(target == null ? null : target.getUUID(), mob.level().getGameTime(),
+            mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(mob.getTemplateId()), mob.getRandom()::nextInt);
+        attackBurst = 0;
+        if (gunState == GunState.READY_TO_ATTACK) { gunState = GunState.LOADED; attackDelay = 0; }
+    }
+    public void observeTarget() {
+        LivingEntity target = mob.getTarget();
+        if (target != null && target.isAlive()) combat.observe(target.getUUID(), mob.getSensing().hasLineOfSight(target),
+            mob.level().getGameTime(), mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(mob.getTemplateId()), mob.getRandom()::nextInt);
+    }
     public GunState gunState;
     public ShootResult lastResult = ShootResult.NOT_GUN;
     public final double speedModifier;
@@ -85,6 +98,10 @@ extends Goal {
             boolean flag1;
             this.panicPath = null;
             boolean flag = this.mob.getSensing().hasLineOfSight((Entity)livingentity);
+            var profile = mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(mob.getTemplateId());
+            var weapon = profile.weapon(mob.combatGunType());
+            long now = mob.level().getGameTime();
+            combat.observe(livingentity.getUUID(), flag, now, profile, mob.getRandom()::nextInt);
             boolean bl = flag1 = this.seeTime > 0;
             if (flag != flag1) {
                 this.seeTime = 0;
@@ -120,23 +137,27 @@ extends Goal {
                 return;
             }
             this.mob.getLookControl().setLookAt((Entity)livingentity, 30.0f, 30.0f);
+            this.mob.aim(flag && d0 >= profile.aimDistance() * profile.aimDistance());
             if (this.gunState == GunState.EMPTY) {
                 ((AutoGunOperator)(this.mob)).reload();
                 this.gunState = GunState.RELOADING;
             } else if (this.gunState == GunState.RELOADING) {
                 if (((AutoGunOperator)(this.mob)).getDataHolder().reloadStateType == ReloadState.StateType.TACTICAL_RELOAD_FINISHING || ((AutoGunOperator)(this.mob)).getDataHolder().reloadStateType == ReloadState.StateType.EMPTY_RELOAD_FINISHING || ((AutoGunOperator)(this.mob)).getDataHolder().reloadStateType == ReloadState.StateType.NOT_RELOADING) {
                     this.gunState = GunState.LOADED;
-                    this.attackDelay();
+                    this.attackDelay = 0;
                 }
             } else if (this.gunState == GunState.LOADED) {
                 --this.attackDelay;
                 if (this.attackDelay <= 0) {
                     this.gunState = GunState.READY_TO_ATTACK;
                     this.attackBurst = ((AutoGunOperator)(this.mob)).getStateBurst();
-                    ((AutoGunOperator)(this.mob)).aim(this.mob.distanceToSqr((Entity)this.mob.getTarget()) > 10.0);
                 }
-            } else if (this.gunState == GunState.READY_TO_ATTACK && flag) {
-                this.lastResult = ((AutoGunOperator)(this.mob)).shoot(() -> Float.valueOf(this.mob.getViewXRot(1.0f)), () -> Float.valueOf(this.mob.getViewYRot(1.0f)));
+            } else if (this.gunState == GunState.READY_TO_ATTACK && combat.mayFire(livingentity.getUUID(), flag, now)) {
+                var error = mod.cdv.tnpc.entity.ai.CombatAim.offset(profile, Math.sqrt(d0), mob.getRandom().nextDouble(), mob.getRandom().nextDouble());
+                float pitch = Math.max(-89.9f, Math.min(89.9f, mob.getViewXRot(1.0f) + error.pitch()));
+                float yaw = mob.getViewYRot(1.0f) + error.yaw();
+                // Stable suppliers: repeated reads/pellets share the same NPC aim centre.
+                this.lastResult = mob.shoot(() -> pitch, () -> yaw);
                 if (this.lastResult == ShootResult.NOT_DRAW) {
                     ((AutoGunOperator)(this.mob)).draw(() -> this.mob.getMainHandItem());
                     return;
@@ -150,8 +171,9 @@ extends Goal {
                     return;
                 }
                 if (this.lastResult == ShootResult.SUCCESS) {
+                    combat.fired(now, weapon.shotIntervalTicks().sample(mob.getRandom()::nextInt));
                     --this.attackBurst;
-                    if (this.attackBurst == 0) {
+                    if (this.attackBurst <= 0) {
                         this.attackDelay();
                         this.gunState = GunState.LOADED;
                     }
@@ -161,7 +183,7 @@ extends Goal {
     }
 
     public void attackDelay() {
-        this.attackDelay = ((AutoGunOperator)(this.mob)).getStateRangedCooldown() * this.mob.getRandom().nextInt(6) + (int)Math.min(this.mob.distanceToSqr((Entity)this.mob.getTarget()) / 12.0, 8.0) + 5;
+        this.attackDelay = mob.getStateRangedCooldown();
     }
 
     private boolean canRun() {

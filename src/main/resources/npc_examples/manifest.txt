@@ -24,3 +24,4 @@ VIAGENS.md
 config/tacznpc_travel.json
 config/tacznpc_dialogue_replies.json
 DIALOGOS.md
+COMBATE.md

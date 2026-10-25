@@ -67,9 +67,10 @@ public final class NpcBehaviorConfig {
             "maxResters": 4,
             "minSpacing": 12
           },
+          "combat": %s,
           "loadouts": {}
         }
-        """;
+        """.formatted(CombatSettings.DEFAULT_JSON);
 
     public record RestSettings(boolean enabled, Set<ResourceLocation> poiTypes, int searchRadius,
         int searchIntervalTicks, double chance, int minDurationTicks, int maxDurationTicks,
@@ -89,14 +90,15 @@ public final class NpcBehaviorConfig {
 
     private record Snapshot(RestSettings defaults, Map<String, RestSettings> loadouts,
         PerceptionSettings perception, Map<String, PerceptionSettings> perceptionLoadouts,
-        CampfireSettings campfire, Map<String, CampfireSettings> campfireLoadouts, CampfireWorldSettings campfires, DamageEscapeSettings escape, Map<String, DamageEscapeSettings> escapeLoadouts) {}
+        CampfireSettings campfire, Map<String, CampfireSettings> campfireLoadouts, CampfireWorldSettings campfires, DamageEscapeSettings escape, Map<String, DamageEscapeSettings> escapeLoadouts,
+        CombatSettings.Profile combat, Map<String, CombatSettings.Profile> combatLoadouts) {}
     private static final RestSettings BUILTIN = new RestSettings(true,
         Set.of(ResourceLocation.withDefaultNamespace("meeting")), 24, 100, 0.5,
         200, 600, 600, 1800, 200, 1.0, 6.0);
     private static final PerceptionSettings BUILTIN_PERCEPTION = new PerceptionSettings(true, 16, 6, 48, 600, 12);
     private static final CampfireSettings BUILTIN_CAMPFIRE = new CampfireSettings(true, true, true, 2400, 60, 40, true);
     private static final CampfireWorldSettings BUILTIN_CAMPFIRES = new CampfireWorldSettings(true, 6000, 4, 12);
-    private static volatile Snapshot current = new Snapshot(BUILTIN, Map.of(), BUILTIN_PERCEPTION, Map.of(), BUILTIN_CAMPFIRE, Map.of(), BUILTIN_CAMPFIRES, BUILTIN_ESCAPE, Map.of());
+    private static volatile Snapshot current = new Snapshot(BUILTIN, Map.of(), BUILTIN_PERCEPTION, Map.of(), BUILTIN_CAMPFIRE, Map.of(), BUILTIN_CAMPFIRES, BUILTIN_ESCAPE, Map.of(), CombatSettings.DEFAULTS, Map.of());
 
     private NpcBehaviorConfig() {}
 
@@ -119,6 +121,10 @@ public final class NpcBehaviorConfig {
         return snapshot.escapeLoadouts().getOrDefault(loadout, snapshot.escape());
     }
     public static CampfireWorldSettings campfires() { return current.campfires(); }
+    public static CombatSettings.Profile combatFor(String loadout) {
+        Snapshot snapshot = current;
+        return snapshot.combatLoadouts().getOrDefault(loadout, snapshot.combat());
+    }
 
     /** A malformed reload keeps the last successfully loaded settings. */
     public static boolean load(MinecraftServer server) {
@@ -136,6 +142,8 @@ public final class NpcBehaviorConfig {
             CampfireSettings campfire = readCampfire(root.has("campfire") ? root.getAsJsonObject("campfire") : new JsonObject(), BUILTIN_CAMPFIRE);
             CampfireWorldSettings campfires = readCampfireWorld(root.has("campfires") ? root.getAsJsonObject("campfires") : new JsonObject());
             DamageEscapeSettings escape = readEscape(root.has("damageEscape") ? root.getAsJsonObject("damageEscape") : new JsonObject(), BUILTIN_ESCAPE);
+            CombatSettings.Profile combat = CombatSettings.parse(root.has("combat") ? root.getAsJsonObject("combat") : new JsonObject(), CombatSettings.DEFAULTS);
+            Map<String, CombatSettings.Profile> combatLoadouts = new HashMap<>();
             Map<String, DamageEscapeSettings> escapeLoadouts = new HashMap<>();
             Map<String, CampfireSettings> campfireLoadouts = new HashMap<>();
             Map<String, RestSettings> loadouts = new HashMap<>();
@@ -143,13 +151,14 @@ public final class NpcBehaviorConfig {
             if (root.has("loadouts")) {
                 for (Map.Entry<String, JsonElement> entry : root.getAsJsonObject("loadouts").entrySet()) {
                     JsonObject profile = entry.getValue().getAsJsonObject();
+                    combatLoadouts.put(entry.getKey(), CombatSettings.parse(profile.has("combat") ? profile.getAsJsonObject("combat") : new JsonObject(), combat));
                     escapeLoadouts.put(entry.getKey(), readEscape(profile.has("damageEscape") ? profile.getAsJsonObject("damageEscape") : new JsonObject(), escape));
                     loadouts.put(entry.getKey(), readRest(profile.has("rest") ? profile.getAsJsonObject("rest") : new JsonObject(), defaults));
                     campfireLoadouts.put(entry.getKey(), readCampfire(profile.has("campfire") ? profile.getAsJsonObject("campfire") : new JsonObject(), campfire));
                     perceptionLoadouts.put(entry.getKey(), readPerception(profile.has("perception") ? profile.getAsJsonObject("perception") : new JsonObject(), perception));
                 }
             }
-            current = new Snapshot(defaults, Map.copyOf(loadouts), perception, Map.copyOf(perceptionLoadouts), campfire, Map.copyOf(campfireLoadouts), campfires, escape, Map.copyOf(escapeLoadouts));
+            current = new Snapshot(defaults, Map.copyOf(loadouts), perception, Map.copyOf(perceptionLoadouts), campfire, Map.copyOf(campfireLoadouts), campfires, escape, Map.copyOf(escapeLoadouts), combat, Map.copyOf(combatLoadouts));
             LOGGER.info("NPC behavior loaded from {}", path);
             return true;
         } catch (IOException | RuntimeException exception) {
