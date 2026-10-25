@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 public final class NpcConversations {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static DialogueProfiles.Snapshot config;
+    private static DialogueReplies.Settings replies;
     private record Talk(AutoGunOperator npc, ServerPlayer player,
                         DialogueSessionManager.Session adm, long expires) {}
     private static final Map<UUID, Talk> talks = new HashMap<>();
@@ -52,12 +53,17 @@ public final class NpcConversations {
             installDefault(profiles.resolve("generic.json"), "generic.json");
             installDefault(profiles.resolve("example_faction.json"), "example_faction.json");
             DialogueProfiles.Snapshot candidate = DialogueProfiles.read(configPath);
+            DialogueReplies.Settings candidateReplies = DialogueReplies.read(configPath.resolveSibling("tacznpc_dialogue_replies.json"));
+            for (String json : candidate.dialogues().values())
+                ConversationMenu.compile(json, mod.cdv.tnpc.quest.QuestDefinition.Lines.EMPTY,
+                    candidateReplies.defaults(), bound -> 0);
             // All JSON is parsed before updating the active registry or ending conversations.
             candidate.dialogues().forEach((id,json) -> AdmDialogueApi.registerDialogue(id, mod.cdv.tnpc.inventory.NpcInventoryTrades.decorate(json)));
             for (Talk talk : List.copyOf(talks.values())) close(talk);
             if (config != null) for (String id : config.dialogues().keySet())
                 if (!candidate.dialogues().containsKey(id)) AdmDialogueApi.unregisterDialogue(id);
             config = candidate;
+            replies = candidateReplies;
             LOGGER.info("NPC dialogues loaded: {} rules", candidate.rules().size());
             return true;
         } catch (IOException | RuntimeException exception) {
@@ -79,15 +85,32 @@ public final class NpcConversations {
             return InteractionResult.PASS;
         }
         if (!available(npc, player) || talks.containsKey(npc.getUUID()) || talkingPlayer(player)) return InteractionResult.PASS;
-        String dialogue = config.select(condition -> DialogueConditionEvaluator.matches(condition, player, npc),
+        String profile = config.select(condition -> DialogueConditionEvaluator.matches(condition, player, npc),
             choice -> NpcDialogueService.isChoiceAvailable(player, npc, choice));
-        if (dialogue == null) return InteractionResult.PASS;
+        if (profile == null) return InteractionResult.PASS;
+        // One active partner per NPC: a stable ID also bounds ADM's saved choice-history keys.
+        String dialogue = "tacznpcs:conversation/session/" + npc.getUUID();
+        try {
+            String json = ConversationMenu.compile(config.dialogues().get(profile),
+                mod.cdv.tnpc.quest.NpcQuests.dialogueLines(npc), replies.forLoadout(npc.getTemplateId()), npc.getRandom()::nextInt);
+            AdmDialogueApi.registerDialogue(dialogue, json);
+        } catch (RuntimeException failure) {
+            AdmDialogueApi.unregisterDialogue(dialogue);
+            LOGGER.error("Could not prepare NPC conversation for {}", npc.getUUID(), failure);
+            return InteractionResult.PASS;
+        }
         openingNpc = npc; openingPlayer = player;
         try { AdmDialogueApi.openDialogue(player, npc, dialogue); }
-        finally { openingNpc = null; openingPlayer = null; }
-        DialogueSessionManager.Session session = DialogueSessionManager.get(player);
-        if (session == null || !session.targetUuid().equals(npc.getUUID()) || !session.dialogueFile().equals(dialogue))
+        catch (RuntimeException failure) {
+            AdmDialogueApi.unregisterDialogue(dialogue);
+            LOGGER.error("Could not open NPC conversation for {}", npc.getUUID(), failure);
             return InteractionResult.PASS;
+        } finally { openingNpc = null; openingPlayer = null; }
+        DialogueSessionManager.Session session = DialogueSessionManager.get(player);
+        if (session == null || !session.targetUuid().equals(npc.getUUID()) || !session.dialogueFile().equals(dialogue)) {
+            AdmDialogueApi.unregisterDialogue(dialogue);
+            return InteractionResult.PASS;
+        }
         talks.put(npc.getUUID(), new Talk(npc, player, session, npc.level().getGameTime() + config.maxDurationTicks()));
         npc.getNavigation().stop();
         return InteractionResult.CONSUME;
@@ -133,6 +156,7 @@ public final class NpcConversations {
             DialogueSessionManager.close(talk.player());
             PacketDistributor.sendToPlayer(talk.player(), new ConversationClosePacket(talk.npc().getUUID(), talk.adm().dialogueFile()));
         }
+        AdmDialogueApi.unregisterDialogue(talk.adm().dialogueFile());
     }
     public static void clientClosed(ServerPlayer player, UUID npc, String file) {
         Talk talk = talks.get(npc);
@@ -170,9 +194,11 @@ public final class NpcConversations {
             mod.cdv.tnpc.inventory.NpcInventoryTrades.authorize(npc,event.getPlayer(),event.getChoice().trade());
     }
     @SubscribeEvent public void stopped(ServerStoppedEvent event) {
+        talks.values().forEach(talk -> AdmDialogueApi.unregisterDialogue(talk.adm().dialogueFile()));
         talks.clear();
         mod.cdv.tnpc.inventory.NpcInventoryTrades.clear();
         if (config != null) config.dialogues().keySet().forEach(AdmDialogueApi::unregisterDialogue);
         config = null;
+        replies = null;
     }
 }

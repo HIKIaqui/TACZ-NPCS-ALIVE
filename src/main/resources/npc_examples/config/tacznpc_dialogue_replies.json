@@ -1,0 +1,7 @@
+{
+  "defaults": {"activity": [], "news": [], "help": [], "follow": []},
+  "loadouts": {
+    "villagers": {"activity": ["I'm gathering supplies. We need to keep the village going."]},
+    "illagers": {"activity": ["Keeping watch. That's all you need to know."]}
+  }
+}

@@ -22,3 +22,5 @@ config/tacznpc_offline_actions.json
 config/tacznpc_structures.json
 VIAGENS.md
 config/tacznpc_travel.json
+config/tacznpc_dialogue_replies.json
+DIALOGOS.md
