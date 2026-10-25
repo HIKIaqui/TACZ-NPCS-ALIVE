@@ -1,12 +1,5 @@
 {
   "illagers": {
-    "aligned": [
-      "illagers",
-      "monster"
-    ],
-    "opposed": [
-      "villagers"
-    ],
     "equipment": {
       "table": "tacznpcs:npc/illager",
       "dropChances": {
@@ -30,16 +23,15 @@
       {
         "id": "tacznpcs:entity/illager2.png"
       }
-    ]
+    ],
+    "faction": "illagers",
+    "relations": {
+      "illagers": 50,
+      "monster": 50,
+      "villagers": -100
+    }
   },
   "villagers": {
-    "aligned": [
-      "villagers"
-    ],
-    "opposed": [
-      "illagers",
-      "monster"
-    ],
     "equipment": {
       "table": "tacznpcs:npc/villager",
       "dropChances": {
@@ -63,15 +55,22 @@
       {
         "id": "tacznpcs:entity/villager1.png"
       }
-    ]
+    ],
+    "faction": "villagers",
+    "relations": {
+      "villagers": 50,
+      "illagers": -100,
+      "monster": -100
+    }
   },
   "default": {
     "primary": "%tacz:glock_17",
     "skin": {
       "id": "tacznpcs:entity/default.png"
     },
-    "opposed": [
-      "monster"
-    ]
+    "faction": "default",
+    "relations": {
+      "monster": -100
+    }
   }
 }

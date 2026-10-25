@@ -18,7 +18,9 @@ public final class NpcInventoryCommands {
                 .then(Commands.argument("count", IntegerArgumentType.integer(1, 64000)).executes(c -> {
                     var input = ItemArgument.getItem(c, "item"); int count = IntegerArgumentType.getInteger(c, "count"), affected = 0;
                     for (var entity : EntityArgument.getEntities(c, "npcs")) if (entity instanceof AutoGunOperator npc && npc.isAlive()) {
-                        npc.getNpcInventory().store(input.createItemStack(count, false)); affected++;
+                        int accepted=npc.getNpcInventory().insert(input.createItemStack(count, false));
+                        if(accepted>0) affected++;
+                        c.getSource().sendSuccess(() -> Component.literal(npc.getUUID()+": accepted "+accepted+"/"+count+" items"),false);
                     }
                     int total = affected; c.getSource().sendSuccess(() -> Component.literal("Added inventory items to " + total + " NPC(s)."), true);
                     return affected;
@@ -26,9 +28,12 @@ public final class NpcInventoryCommands {
             .then(Commands.literal("list").then(Commands.argument("npc", EntityArgument.entity()).executes(c -> {
                 if (!(EntityArgument.getEntity(c,"npc") instanceof AutoGunOperator npc)) return 0;
                 var items = npc.getNpcInventory().allItems();
-                c.getSource().sendSuccess(() -> Component.literal(npc.getUUID() + ": " + items.size() + " stacks (equipment included)"), false);
-                for (var stack : items.stream().limit(32).toList())
-                    c.getSource().sendSuccess(() -> Component.literal(stack.getCount() + "x ").append(stack.getHoverName()), false);
+                c.getSource().sendSuccess(() -> Component.literal(npc.getUUID() + ": " + npc.getNpcInventory().cargoSnapshot().size()+"/"+NpcInventoryConfig.forLoadout(npc.getTemplateId()).maxCargoSlots()+" cargo slots, "+items.size()+" stacks including equipment"), false);
+                var policy=NpcInventoryConfig.forLoadout(npc.getTemplateId());
+                for (var stack : items.stream().limit(40).toList())
+                    c.getSource().sendSuccess(() -> Component.literal(stack.getCount() + "x ").append(stack.getHoverName())
+                        .append(Component.literal(" | interest="+policy.interest(stack)+", basePrice="
+                            +(policy.basePrice(stack).isPresent() ? policy.basePrice(stack).getAsInt() : "unset")+", protected="+policy.protectedItem(stack))), false);
                 return items.size();
             })))
             .then(Commands.literal("collect").then(Commands.argument("npc", EntityArgument.entity())

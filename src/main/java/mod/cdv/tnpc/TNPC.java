@@ -65,7 +65,10 @@ public class TNPC {
     @SubscribeEvent
     public void serverLoading(ServerAboutToStartEvent event) {
         mod.cdv.tnpc.data.NpcConfigExamples.install(event.getServer());
-        TemplateDataManager.init(event.getServer());
+        if (!TemplateDataManager.init(event.getServer()))
+            throw new IllegalStateException("Invalid NPC loadout config: replace aligned/opposed with faction and relations. See server log.");
+        if (!mod.cdv.tnpc.reputation.ReputationConfig.load(event.getServer()))
+            throw new IllegalStateException("Invalid tacznpc_reputation.json; see server log.");
         mod.cdv.tnpc.inventory.NpcInventoryConfig.load(event.getServer());
         NpcBehaviorConfig.load(event.getServer());
         mod.cdv.tnpc.offline.OfflineConfig.load(event.getServer());
@@ -79,12 +82,16 @@ public class TNPC {
         mod.cdv.tnpc.offline.OfflineEvents.registerCommands(event);
         mod.cdv.tnpc.inventory.NpcInventoryCommands.register(event);
         mod.cdv.tnpc.quest.QuestCommands.register(event);
+        mod.cdv.tnpc.reputation.ReputationCommands.register(event);
         mod.cdv.tnpc.travel.TravelCommands.register(event);
         CommandDispatcher dispatcher = event.getDispatcher();
-        dispatcher.register((LiteralArgumentBuilder)Commands.literal((String)"tacznpcs_reload").executes(context -> {
+        dispatcher.register((LiteralArgumentBuilder)Commands.literal((String)"tacznpcs_reload").requires(source -> source.hasPermission(2)).executes(context -> {
             if (!mod.cdv.tnpc.travel.TravelConfig.load(context.getSource().getServer()))
                 context.getSource().sendFailure(Component.literal("Travel reload failed; previous settings retained."));
-            TemplateDataManager.init(((CommandSourceStack)context.getSource()).getServer());
+            boolean templatesLoaded = TemplateDataManager.init(context.getSource().getServer());
+            if (!templatesLoaded) context.getSource().sendFailure(Component.literal("NPC templates reload failed; previous settings retained. Check faction/relations schema."));
+            if (!mod.cdv.tnpc.reputation.ReputationConfig.load(context.getSource().getServer()))
+                context.getSource().sendFailure(Component.literal("NPC reputation reload failed; previous settings retained."));
             if (!mod.cdv.tnpc.quest.QuestConfig.load(context.getSource().getServer()))
                 ((CommandSourceStack)context.getSource()).sendFailure(Component.literal("Could not reload NPC quests; keeping previous settings."));
             else ((CommandSourceStack)context.getSource()).sendSuccess(() -> Component.literal("NPC quests reloaded"), false);
@@ -101,8 +108,7 @@ public class TNPC {
             } else {
                 ((CommandSourceStack)context.getSource()).sendFailure(Component.literal("Could not reload tacznpc_behavior.json; keeping previous settings. Check the log."));
             }
-            ((CommandSourceStack)context.getSource()).sendSuccess(() -> Component.literal((String)"npc_loadouts.json reloaded"), false);
-            ((CommandSourceStack)context.getSource()).sendSuccess(() -> Component.literal((String)"npc_factions.json reloaded"), false);
+            if (templatesLoaded) context.getSource().sendSuccess(() -> Component.literal("NPC loadouts, factions and structures reloaded"), false);
             return 1;
         }));
     }

@@ -12,10 +12,15 @@ public final class ConversationMenu {
     private ConversationMenu() {}
     public static String compile(String json, QuestDefinition.Lines quest, DialogueReplies.Lines replies,
                                  IntUnaryOperator random) {
+        return compile(json,quest,replies,random,null);
+    }
+    public static String compile(String json, QuestDefinition.Lines quest, DialogueReplies.Lines replies,
+                                 IntUnaryOperator random, String reputationGreeting) {
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
         JsonObject nodes = root.getAsJsonObject("nodes");
         String start = root.get("start").getAsString();
         JsonObject greeting = nodes.getAsJsonObject(start);
+        if (reputationGreeting != null) greeting.addProperty("text",reputationGreeting);
         JsonArray original = greeting.has("choices") ? greeting.getAsJsonArray("choices").deepCopy() : new JsonArray();
         String prefix = "tnpc_menu_";
         while (collides(nodes, prefix)) prefix = "_" + prefix;

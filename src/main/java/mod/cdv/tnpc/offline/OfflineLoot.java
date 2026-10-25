@@ -158,7 +158,7 @@ public final class OfflineLoot {
         if (table == null || table.pools.isEmpty()) return false;
         // Generate every candidate before consulting interests: no weight adjustment or free reroll.
         List<ItemStack> found = roll(table, npc.getRandom());
-        for (ItemStack stack : choose(found, NpcInventoryConfig.forLoadout(npc.getTemplateId()))) npc.getNpcInventory().store(stack);
+        for (ItemStack stack : choose(found, NpcInventoryConfig.forLoadout(npc.getTemplateId()))) npc.getNpcInventory().collect(stack);
         return true; // Searching consumed time even when nothing was found or accepted.
     }
     private static Range range(JsonObject o, String key, int fallback, int min, int max) {

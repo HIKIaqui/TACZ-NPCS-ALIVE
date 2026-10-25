@@ -30,6 +30,7 @@ public final class DialogueProfiles {
 
     public static Snapshot read(Path config) throws IOException {
         JsonObject root = JsonParser.parseString(Files.readString(config)).getAsJsonObject();
+        ReputationDialogue.validate(root);
         Path folder = config.resolveSibling("tacznpc_dialogues");
         String generic = string(root, "genericProfile", "generic");
         Map<String, JsonObject> profiles = new HashMap<>();
@@ -80,6 +81,7 @@ public final class DialogueProfiles {
         String start = string(json, "start", "");
         if (start.isBlank() || !json.getAsJsonObject("nodes").has(start))
             throw new IllegalArgumentException("Profile requires an existing start node: " + name);
+        ReputationDialogue.validate(json);
         NpcDialogueDefinition.fromJson(json.toString());
         cache.put(name, json);
         return json;

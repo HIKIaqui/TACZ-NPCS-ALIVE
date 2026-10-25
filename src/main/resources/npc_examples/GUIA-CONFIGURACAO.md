@@ -152,13 +152,13 @@ A seleção offline substitui `shareChance` e a espera de `shareCooldownTicks` d
 
 ## Loadouts, facções e estruturas
 
-Em `tacznpc_loadouts.json`, `aligned` e `opposed` aceitam facções e IDs de loadouts. Loadouts com uma afiliação em comum ou referência direta em `aligned` se reconhecem como aliados; oposição de qualquer lado tem prioridade. `meetAllies` sorteia entre todos os loadouts aliados cadastrados. A reação a dano próximo usa a mesma relação. Veja `ALIADOS.md` para um exemplo completo dessas regras. `skin` pode ser um objeto ou lista com `id` e `slim` opcional; `names` permite nomes aleatórios.
+Em `tacznpc_loadouts.json`, `faction` identifica a facção e `relations` associa IDs a valores numéricos. Relações são direcionais; `meetAllies` exige aliança mútua. Veja `REPUTACAO.md`. `skin` pode ser objeto ou lista com `id` e `slim`; `names` define nomes aleatórios.
 
 Os campos `primary`, `secondary`, `helmet`, `chestplate`, `leggings` e `boots` aceitam ID de item, `%tacz:glock_17` para uma arma, `#tag` para sortear item de uma tag ou `$namespace:loot_table` para uma loot table. `equipment.table` usa uma tabela de equipamento completa. Essas tabelas pertencem aos recursos/data packs do Minecraft, enquanto `tacznpc_loot/` é o loot de expedição que vai para a mochila.
 
 Os exemplos preservam as skins e tabelas originais de villagers/illagers. Campos antigos de `dropChances` permanecem no formato, mas o inventário atual dropa toda a carga e equipamento na morte, respeitando a regra mundial de loot.
 
-`tacznpc_factions.json` associa facções a tipos de entidades como `minecraft:villager`. NPCs entram nessas facções via `aligned`. Categorias especiais como `monster` são reconhecidas pelo comportamento existente.
+`tacznpc_factions.json` associa grupos a tipos de entidades vanilla/modded, como `minecraft:villager`. A identidade de facção dos NPCs vem de `faction` no loadout. `relations` também aceita categorias como `monster`; a regra explícita de um grupo prevalece sobre a categoria.
 
 `tacznpc_structures.json` contém regras por ID de estrutura com `entities`, `loadout` e `chance`. Atua durante geração de estruturas; não converte retroativamente todos os mobs existentes.
 
@@ -211,3 +211,5 @@ Os perfis em `tacznpc_dialogues/` têm `start`, `nodes`, texto e `choices`; esco
 Após editar, execute `/tacznpcs_reload`. O reload das ações offline e das listas é conjunto: qualquer lista inválida ou seletor de bioma inválido mantém ambos na última versão válida. O log identifica arquivo, bioma, pool e entrada quando possível. Em primeira inicialização, não existe snapshot anterior de loot para recuperar.
 
 JSON não aceita comentários nem vírgula após o último campo. Nas listas de loot, use `biomes` para os seletores e `pools → entries` para os sorteios; o arquivo `default.json` não contém seletores.
+
+A partir do patch de interesses, carga nova tem 15 slots por padrão, configuráveis por loadout até 36. Interesses aceitam objetos com weight/basePrice/protected. Veja INTERESSES.md para substituição, proteção, compatibilidade e herança.

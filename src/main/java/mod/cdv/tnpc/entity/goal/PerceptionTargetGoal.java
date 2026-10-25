@@ -11,6 +11,9 @@ public final class PerceptionTargetGoal extends NearestAttackableTargetGoal<Livi
         super(npc, LivingEntity.class, true, target -> npc.getTemplate() != null && npc.isOpposedTo(target));
         this.npc = npc;
     }
+    @Override public boolean canContinueToUse() {
+        return npc.getTarget() != null && npc.isOpposedTo(npc.getTarget()) && super.canContinueToUse();
+    }
     @Override protected void findTarget() {
         double range = npc.getDetectionRange();
         targetConditions.range(range);

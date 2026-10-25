@@ -1,0 +1,7 @@
+{
+  "hostileAt": -50,
+  "alliedAt": 50,
+  "tradeMinimum": -49,
+  "defaultFactionReputation": 0,
+  "factionDefaults": {}
+}

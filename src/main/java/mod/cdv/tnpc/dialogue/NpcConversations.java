@@ -23,6 +23,7 @@ public final class NpcConversations {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static DialogueProfiles.Snapshot config;
     private static DialogueReplies.Settings replies;
+    private static ReputationGreetings.Settings greetings;
     private record Talk(AutoGunOperator npc, ServerPlayer player,
                         DialogueSessionManager.Session adm, long expires) {}
     private static final Map<UUID, Talk> talks = new HashMap<>();
@@ -30,10 +31,13 @@ public final class NpcConversations {
     private static ServerPlayer openingPlayer;
 
     public static void registerConditions() {
+        AdmDialogueApi.registerConditionType("tnpc.reputation", (p,e,c) -> e instanceof AutoGunOperator npc
+            && ReputationDialogue.matches(mod.cdv.tnpc.reputation.ReputationAccess.effective(npc,p),c));
         AdmDialogueApi.registerConditionType("tnpc.can_trade", (p,e,c) -> e instanceof AutoGunOperator npc
-            && mod.cdv.tnpc.inventory.NpcInventoryConfig.forLoadout(npc.getTemplateId()).canTrade());
+            && mod.cdv.tnpc.inventory.NpcInventoryConfig.forLoadout(npc.getTemplateId()).canTrade()
+            && mod.cdv.tnpc.reputation.ReputationAccess.canTrade(npc,p));
         AdmDialogueApi.registerConditionType("tnpc.faction", (p, e, c) -> e instanceof AutoGunOperator npc
-            && npc.getTemplate() != null && !c.id().isBlank() && npc.getTemplate().aligned().contains(c.id()));
+            && npc.getTemplate() != null && !c.id().isBlank() && npc.getFactionId().equals(c.id()));
         AdmDialogueApi.registerConditionType("tnpc.loadout", (p, e, c) -> e instanceof AutoGunOperator npc
             && !c.id().isBlank() && npc.getTemplateId().equals(c.id()));
         AdmDialogueApi.registerConditionType("tnpc.uuid", (p, e, c) -> e instanceof AutoGunOperator npc
@@ -54,9 +58,10 @@ public final class NpcConversations {
             installDefault(profiles.resolve("example_faction.json"), "example_faction.json");
             DialogueProfiles.Snapshot candidate = DialogueProfiles.read(configPath);
             DialogueReplies.Settings candidateReplies = DialogueReplies.read(configPath.resolveSibling("tacznpc_dialogue_replies.json"));
+            ReputationGreetings.Settings candidateGreetings = ReputationGreetings.read(configPath.resolveSibling("tacznpc_greetings.json"));
             for (String json : candidate.dialogues().values())
                 ConversationMenu.compile(json, mod.cdv.tnpc.quest.QuestDefinition.Lines.EMPTY,
-                    candidateReplies.defaults(), bound -> 0);
+                    candidateReplies.defaults(), bound -> 0, candidateGreetings.longest());
             // All JSON is parsed before updating the active registry or ending conversations.
             candidate.dialogues().forEach((id,json) -> AdmDialogueApi.registerDialogue(id, mod.cdv.tnpc.inventory.NpcInventoryTrades.decorate(json)));
             for (Talk talk : List.copyOf(talks.values())) close(talk);
@@ -64,6 +69,7 @@ public final class NpcConversations {
                 if (!candidate.dialogues().containsKey(id)) AdmDialogueApi.unregisterDialogue(id);
             config = candidate;
             replies = candidateReplies;
+            greetings = candidateGreetings;
             LOGGER.info("NPC dialogues loaded: {} rules", candidate.rules().size());
             return true;
         } catch (IOException | RuntimeException exception) {
@@ -92,7 +98,9 @@ public final class NpcConversations {
         String dialogue = "tacznpcs:conversation/session/" + npc.getUUID();
         try {
             String json = ConversationMenu.compile(config.dialogues().get(profile),
-                mod.cdv.tnpc.quest.NpcQuests.dialogueLines(npc), replies.forLoadout(npc.getTemplateId()), npc.getRandom()::nextInt);
+                mod.cdv.tnpc.quest.NpcQuests.dialogueLines(npc), replies.forLoadout(npc.getTemplateId()), npc.getRandom()::nextInt,
+                greetings.select(npc.getTemplateId(),npc.getFactionId(),
+                    mod.cdv.tnpc.reputation.ReputationAccess.effective(npc,player),npc.getRandom()::nextInt));
             AdmDialogueApi.registerDialogue(dialogue, json);
         } catch (RuntimeException failure) {
             AdmDialogueApi.unregisterDialogue(dialogue);
@@ -138,6 +146,7 @@ public final class NpcConversations {
     public static boolean canTrade(AutoGunOperator npc, ServerPlayer player) {
         Talk talk = talks.get(npc.getUUID());
         return talk != null && talk.player() == player && available(npc,player)
+            && mod.cdv.tnpc.reputation.ReputationAccess.canTrade(npc,player)
             && npc.level().getGameTime() < talk.expires()
             && player.server.getPlayerList().getPlayer(player.getUUID()) == player
             && player.serverLevel().getEntity(npc.getUUID()) == npc;
@@ -200,5 +209,6 @@ public final class NpcConversations {
         if (config != null) config.dialogues().keySet().forEach(AdmDialogueApi::unregisterDialogue);
         config = null;
         replies = null;
+        greetings = null;
     }
 }

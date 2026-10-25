@@ -37,11 +37,13 @@ public class AlertEnemiesGoal extends Goal {
         this.conditions.range(scanRange);
         for (PathfinderMob enemy : this.op.level().getNearbyEntities(PathfinderMob.class,
                 this.conditions, this.op, this.op.getBoundingBox().inflate(scanRange, Math.min(8.0, scanRange), scanRange))) {
-            double range = enemy.getAttributeValue(Attributes.FOLLOW_RANGE);
-            // A resting enemy NPC must discover threats by its own awareness rules, too.
-            if (enemy instanceof AutoGunOperator npc) range = Math.min(range, npc.getDetectionRange());
+            // We only know the recipient's relationship policy for our own NPCs.
+            // Vanilla/modded mobs retain their own target selection instead of being forced to retaliate.
+            if (!(enemy instanceof AutoGunOperator recipient)) continue;
+            double range = Math.min(enemy.getAttributeValue(Attributes.FOLLOW_RANGE), recipient.getDetectionRange());
             if (enemy.getTarget() == null && this.op.distanceToSqr(enemy) < range * range
-                && this.op.isOpposedTo(enemy) && enemy.canAttack(this.op)) {
+                && recipient.isOpposedTo(this.op)
+                && enemy.canAttack(this.op)) {
                 enemy.setTarget(this.op);
             }
         }

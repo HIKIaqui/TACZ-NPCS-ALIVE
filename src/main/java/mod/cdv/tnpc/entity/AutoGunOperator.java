@@ -212,6 +212,10 @@ implements IGunOperator {
                 return attacker != null && attacker != AutoGunOperator.this
                     && !AutoGunOperator.this.isAlliedTo(attacker) && super.canUse();
             }
+            @Override public boolean canContinueToUse() {
+                LivingEntity target = this.mob.getTarget();
+                return target != null && !AutoGunOperator.this.isAlliedTo(target) && super.canContinueToUse();
+            }
         });
         this.targetSelector.addGoal(2, new mod.cdv.tnpc.entity.goal.PerceptionTargetGoal(this));
         this.targetSelector.addGoal(3, new AlertAlliesGoal(this));
@@ -252,6 +256,7 @@ implements IGunOperator {
     public void setTarget(@javax.annotation.Nullable LivingEntity target) {
         LivingEntity before = this.getTarget();
         super.setTarget(target);
+        if (this.getTarget() != before) this.relationshipTargetWasHostile = this.getTarget() != null && this.isOpposedTo(this.getTarget());
         if (!this.level().isClientSide && this.fireAtNearestTargetGoal != null && this.awareness != null && this.getTarget() != before)
             this.fireAtNearestTargetGoal.targetChanged(this.getTarget());
         // Use the actual target: NeoForge can replace/cancel the requested target.
@@ -267,53 +272,25 @@ implements IGunOperator {
         return accepted;
     }
 
-    public boolean isAlliedTo(LivingEntity other) {
-        if (other == null || this.template == null) {
-            return false;
-        }
-        if (other instanceof AutoGunOperator npc) {
-            return mod.cdv.tnpc.data.NpcRelations.allied(this.templateId, this.relationshipTemplate(),
-                npc.templateId, npc.relationshipTemplate(),
-                mod.cdv.tnpc.data.NpcRelations.entityGroups(this.getType(), TemplateDataManager.FACTIONS));
-        }
-        if (this.isOpposedTo(other)) return false;
-        for (String id : this.relationshipTemplate().aligned()) {
-            if (AutoGunOperator.isValidMobCategory(id)) {
-                MobCategory category = MobCategory.valueOf((String)id.toUpperCase());
-                if (other.getType().getCategory() == category) {
-                    return true;
-                }
-            }
-            Set<EntityType<?>> faction = TemplateDataManager.FACTIONS.getOrDefault(id, TemplateDataManager.EMPTY_ENTITY);
-            if (!faction.contains(other.getType())) continue;
-            return true;
-        }
-        return false;
-    }
+    public String getFactionId() { return relationshipTemplate().faction(); }
 
+    public long relationTo(LivingEntity other) {
+        if (other == null || this.template == null) return 0;
+        if (other instanceof net.minecraft.server.level.ServerPlayer player)
+            return mod.cdv.tnpc.reputation.ReputationData.get(player.server).effective(player.getUUID(), getFactionId(), getUUID());
+        if (other instanceof net.minecraft.world.entity.player.Player) return 0; // Authoritative checks run on the server.
+        if (other instanceof AutoGunOperator npc)
+            return mod.cdv.tnpc.data.NpcRelations.value(this.templateId, this.relationshipTemplate(),
+                npc.templateId, npc.relationshipTemplate(), java.util.Set.of());
+        return mod.cdv.tnpc.data.NpcRelations.mobValue(this.relationshipTemplate(),
+            mod.cdv.tnpc.data.NpcRelations.entityGroups(other.getType(), TemplateDataManager.FACTIONS),
+            other.getType().getCategory().getName());
+    }
+    public boolean isAlliedTo(LivingEntity other) {
+        return other != null && (other == this || mod.cdv.tnpc.reputation.ReputationConfig.settings().allied(relationTo(other)));
+    }
     public boolean isOpposedTo(LivingEntity other) {
-        if (other == null || this.template == null) {
-            return false;
-        }
-        if (other instanceof AutoGunOperator) {
-            AutoGunOperator au = (AutoGunOperator)other;
-            return mod.cdv.tnpc.data.NpcRelations.opposed(this.templateId, this.relationshipTemplate(),
-                au.templateId, au.relationshipTemplate(),
-                mod.cdv.tnpc.data.NpcRelations.entityGroups(this.getType(), TemplateDataManager.FACTIONS));
-        } else {
-            for (String id : this.relationshipTemplate().opposed()) {
-                Set<EntityType<?>> faction;
-                if (AutoGunOperator.isValidMobCategory(id)) {
-                    MobCategory category = MobCategory.valueOf((String)id.toUpperCase());
-                    if (other.getType().getCategory() == category) {
-                        return true;
-                    }
-                }
-                if (!(faction = TemplateDataManager.FACTIONS.getOrDefault(id, TemplateDataManager.EMPTY_ENTITY)).contains(other.getType())) continue;
-                return true;
-            }
-        }
-        return false;
+        return other != null && other != this && mod.cdv.tnpc.reputation.ReputationConfig.settings().hostile(relationTo(other));
     }
 
     public NPCTemplate relationshipTemplate() {
@@ -372,13 +349,20 @@ implements IGunOperator {
         return super.mobInteract(player, hand);
     }
 
+    private boolean relationshipTargetWasHostile;
+    public void refreshRelationshipTarget() {
+        LivingEntity target = getTarget();
+        if (target != null && (isAlliedTo(target) || (relationshipTargetWasHostile && !isOpposedTo(target)))) setTarget(null);
+    }
     @Override
     protected void customServerAiStep() {
+        refreshRelationshipTarget();
         super.customServerAiStep();
         if (this.fireAtNearestTargetGoal != null) this.fireAtNearestTargetGoal.observeTarget();
     }
 
     public void tick() {
+        if (!this.level().isClientSide) refreshRelationshipTarget();
         if (this.level() instanceof ServerLevel serverLevel) mod.cdv.tnpc.quest.NpcQuests.tick(this, serverLevel);
         if (this.level() instanceof ServerLevel serverLevel) this.offlineActions.tick(this, serverLevel);
         if (this.isRemoved()) return;
@@ -461,7 +445,7 @@ implements IGunOperator {
             for (ItemStack itemStack : this.template.randomEquip(sv)) {
                 ItemStack equipped = this.equipItemIfPossible(itemStack.copy());
                 ItemStack extra = itemStack.copy(); extra.shrink(equipped.getCount());
-                this.npcInventory.store(extra);
+                this.npcInventory.storeInitial(extra);
             }
             if (!this.template.names().isEmpty()) {
                 this.setCustomName((Component)Component.literal((String)this.template.names().get(this.random.nextInt(this.template.names().size()))));
@@ -495,10 +479,12 @@ implements IGunOperator {
         if (wantsEquipment(entity.getItem())) super.pickUpItem(entity);
         else if (mod.cdv.tnpc.inventory.NpcInventoryConfig.forLoadout(getTemplateId()).interested(entity.getItem())) {
             // Vanilla's nearby-item scan already checks pickup delay and mobGriefing.
-            this.npcInventory.store(entity.getItem());
-            this.onItemPickup(entity);
-            this.take(entity, entity.getItem().getCount());
-            entity.discard();
+            int count=this.npcInventory.collect(entity);
+            if(count>0) {
+                this.onItemPickup(entity); this.take(entity,count);
+                int remaining=entity.getItem().getCount()-count;
+                if(remaining==0) entity.discard(); else entity.setItem(entity.getItem().copyWithCount(remaining));
+            }
         }
     }
     @Override public ItemStack equipItemIfPossible(ItemStack stack) {
@@ -506,7 +492,7 @@ implements IGunOperator {
         ItemStack previous = this.getItemBySlot(slot);
         if (stack.isEmpty() || !this.canHoldItem(stack) || !this.canReplaceCurrentItem(stack, previous)) return ItemStack.EMPTY;
         ItemStack equipped = slot.limit(stack.copy());
-        if (!previous.isEmpty()) this.npcInventory.store(previous);
+        if (!previous.isEmpty() && !this.npcInventory.stashEquipment(previous)) return ItemStack.EMPTY;
         this.setItemSlotAndDropWhenKilled(slot, equipped);
         return equipped;
     }

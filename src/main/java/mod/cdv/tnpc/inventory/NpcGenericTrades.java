@@ -27,7 +27,7 @@ public final class NpcGenericTrades {
             int quantity = Math.min(prices.quantity(), item.getDefaultMaxStackSize());
             // Buy = NPC buys from player; sell = NPC sells to player.
             if (desired.contains(item)) offers.add(offer("buy_" + id, "Sell " + item.getDescription().getString(), id, quantity, prices.currency(), prices.buyPrice()));
-            offers.add(offer("sell_" + id, "Buy " + item.getDescription().getString(), prices.currency(), prices.sellPrice(), id, quantity));
+            if(!profile.protectedItem(new ItemStack(item))) offers.add(offer("sell_" + id, "Buy " + item.getDescription().getString(), prices.currency(), prices.sellPrice(), id, quantity));
         }
         if (root.toString().length() > 28000) throw new IllegalArgumentException("Too many generic offers for ADM; narrow interests or configure a custom tradeFile");
         return root.toString();

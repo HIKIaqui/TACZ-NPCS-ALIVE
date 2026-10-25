@@ -52,20 +52,93 @@ public final class TemplateDataManager {
     public static final HashMap<String, Set<EntityType<?>>> FACTIONS = new HashMap();
     public static final HashMap<String, ArrayList<StructureTemplate>> STRUCTURES = new HashMap();
     public static final String DEFAULT_FACTIONS = "{\n    \"players\": [\"minecraft:player\"],\n    \"villagers\": [\"minecraft:villager\", \"minecraft:wandering_trader\", \"minecraft:iron_golem\"],\n    \"illagers\": [\"minecraft:pillager\", \"minecraft:evoker\", \"minecraft:vindicator\", \"minecraft:illusioner\", \"minecraft:ravager\", \"minecraft:vex\"]\n}\n";
-    public static final String DEFAULT_LOADOUTS = "{\n  \"illagers\": {\n    \"aligned\": [\n      \"illagers\",\n      \"monster\"\n    ],\n    \"opposed\": [\n      \"villagers\"\n    ],\n    \"equipment\": {\n      \"table\": \"tacznpcs:npc/illager\",\n      \"dropChances\": {\n        \"mainhand\": 1,\n        \"head\": 0.2,\n        \"chest\": 0.2,\n        \"legs\": 0.2,\n        \"feet\": 0.2\n      }\n    },\n    \"skin\": [\n      {\"id\": \"tacznpcs:entity/illager1.png\"},\n      {\"id\": \"tacznpcs:entity/illager1.png\"},\n      {\"id\": \"tacznpcs:entity/illager1.png\"},\n      {\"id\": \"tacznpcs:entity/illager2.png\"}\n    ]\n  },\n  \"villagers\": {\n    \"aligned\": [\n      \"villagers\"\n    ],\n    \"opposed\": [\n      \"illagers\",\n      \"monster\"\n    ],\n    \"equipment\": {\n      \"table\": \"tacznpcs:npc/villager\",\n      \"dropChances\": {\n        \"mainhand\": 1,\n        \"head\": 0.2,\n        \"chest\": 0.2,\n        \"legs\": 0.2,\n        \"feet\": 0.2\n      }\n    },\n    \"skin\": [\n      {\"id\": \"tacznpcs:entity/villager2.png\"},\n      {\"id\": \"tacznpcs:entity/villager2.png\"},\n      {\"id\": \"tacznpcs:entity/villager2.png\"},\n      {\"id\": \"tacznpcs:entity/villager1.png\"}\n    ]\n  },\n  \"default\": {\n    \"primary\": \"%tacz:glock_17\",\n    \"skin\": {\"id\": \"tacznpcs:entity/default.png\"},\n    \"opposed\": [\n      \"monster\"\n    ]\n  }\n}\n";
+    public static final String DEFAULT_LOADOUTS = """
+{
+  "illagers": {
+    "equipment": {
+      "table": "tacznpcs:npc/illager",
+      "dropChances": {
+        "mainhand": 1,
+        "head": 0.2,
+        "chest": 0.2,
+        "legs": 0.2,
+        "feet": 0.2
+      }
+    },
+    "skin": [
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager2.png"
+      }
+    ],
+    "faction": "illagers",
+    "relations": {
+      "illagers": 50,
+      "monster": 50,
+      "villagers": -100
+    }
+  },
+  "villagers": {
+    "equipment": {
+      "table": "tacznpcs:npc/villager",
+      "dropChances": {
+        "mainhand": 1,
+        "head": 0.2,
+        "chest": 0.2,
+        "legs": 0.2,
+        "feet": 0.2
+      }
+    },
+    "skin": [
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager1.png"
+      }
+    ],
+    "faction": "villagers",
+    "relations": {
+      "villagers": 50,
+      "illagers": -100,
+      "monster": -100
+    }
+  },
+  "default": {
+    "primary": "%tacz:glock_17",
+    "skin": {
+      "id": "tacznpcs:entity/default.png"
+    },
+    "faction": "default",
+    "relations": {
+      "monster": -100
+    }
+  }
+}
+        """;
     public static final String DEFAULT_STRUCTURES = "{\n \"minecraft:pillager_outpost\": [\n   {\n     \"entities\": [\n       \"minecraft:pillager\"\n     ],\n     \"loadout\": \"illagers\",\n     \"chance\": 0.25\n   }\n ],\n \"minecraft:mansion\": [\n   {\n     \"entities\": [\n       \"minecraft:pillager\",\n       \"minecraft:vindicator\"\n     ],\n     \"loadout\": \"illagers\",\n     \"chance\": 0.25\n   }\n ],\n \"minecraft:village_plains\": [\n   {\n     \"entities\": [\n       \"minecraft:villager\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.05\n   },\n   {\n     \"entities\": [\n       \"minecraft:iron_golem\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.5\n   }\n ],\n \"minecraft:village_taiga\": [\n   {\n     \"entities\": [\n       \"minecraft:villager\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.05\n   },\n   {\n     \"entities\": [\n       \"minecraft:iron_golem\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.5\n   }\n ],\n \"minecraft:village_savanna\": [\n   {\n     \"entities\": [\n       \"minecraft:villager\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.05\n   },\n   {\n     \"entities\": [\n       \"minecraft:iron_golem\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.5\n   }\n ],\n \"minecraft:village_desert\": [\n   {\n     \"entities\": [\n       \"minecraft:villager\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.05\n   },\n   {\n     \"entities\": [\n       \"minecraft:iron_golem\"\n     ],\n     \"loadout\": \"villagers\",\n     \"chance\": 0.5\n   }\n ]\n}\n";
     public static final Set<String> EMPTY = Set.of();
     public static final ItemStack[] EMPTY_ITEM = new ItemStack[0];
     public static final Set<EntityType<?>> EMPTY_ENTITY = Set.of();
 
-    public static void init(MinecraftServer server) {
-        TEMPLATES.clear();
-        FACTIONS.clear();
-        STRUCTURES.clear();
+    public static boolean init(MinecraftServer server) {
         Path loadoutPath = server.getServerDirectory().resolve("config").resolve("tacznpc_loadouts.json");
         Path factionsPath = server.getServerDirectory().resolve("config").resolve("tacznpc_factions.json");
         Path structuresPath = server.getServerDirectory().resolve("config").resolve("tacznpc_structures.json");
-        TEMPLATES.put("default", NPCTemplate.DEFAULT);
         try {
             if (Files.notExists(loadoutPath, new LinkOption[0])) {
                 Files.createFile(loadoutPath, new FileAttribute[0]);
@@ -85,12 +158,19 @@ public final class TemplateDataManager {
             } else if (Files.readString(structuresPath).isEmpty()) {
                 Files.writeString(structuresPath, (CharSequence)DEFAULT_STRUCTURES, new OpenOption[0]);
             }
-            TEMPLATES.putAll(TemplateDataManager.loadTemplates(server, loadoutPath));
-            FACTIONS.putAll(TemplateDataManager.loadFactions(factionsPath));
-            STRUCTURES.putAll(TemplateDataManager.loadStructures(structuresPath));
+            // Parse every relation-dependent file before replacing the live configuration.
+            var templates = TemplateDataManager.loadTemplates(server, loadoutPath);
+            var factions = TemplateDataManager.loadFactions(factionsPath);
+            var structures = TemplateDataManager.loadStructures(structuresPath);
+            templates.putIfAbsent("default", NPCTemplate.DEFAULT);
+            TEMPLATES.clear(); TEMPLATES.putAll(templates);
+            FACTIONS.clear(); FACTIONS.putAll(factions);
+            STRUCTURES.clear(); STRUCTURES.putAll(structures);
+            return true;
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
+        catch (IOException | RuntimeException e) {
+            com.mojang.logging.LogUtils.getLogger().error("Could not load NPC templates/factions/structures; keeping previous settings. Replace aligned/opposed with faction and relations.", e);
+            return false;
         }
     }
 
@@ -145,12 +225,10 @@ public final class TemplateDataManager {
             Either<LootTable, ItemStack[]> helmet;
             EquipmentTable equipmentTable;
             List<String> names;
-            Set<String> opposed;
-            Set<String> aligned;
+            NpcRelations.Definition relations;
             if (e instanceof JsonObject) {
                 JsonObject obj = (JsonObject)e;
-                aligned = obj.has("aligned") ? obj.getAsJsonArray("aligned").asList().stream().map(JsonElement::getAsString).collect(Collectors.toSet()) : EMPTY;
-                opposed = obj.has("opposed") ? obj.getAsJsonArray("opposed").asList().stream().map(JsonElement::getAsString).collect(Collectors.toSet()) : EMPTY;
+                relations = NpcRelations.read(str, obj);
                 names = obj.has("names") ? obj.getAsJsonArray("names").asList().stream().map(JsonElement::getAsString).toList() : List.of();
                 equipmentTable = null;
                 if (obj.has("equipment")) {
@@ -188,7 +266,7 @@ public final class TemplateDataManager {
             } else {
                 throw new TemplateException("non-JsonObject found in loadout config!");
             }
-            templates.put((String)str, new NPCTemplate(aligned, opposed, names, equipmentTable, helmet, chestplate, leggings, boots, primary, secondary, texture));
+            templates.put((String)str, new NPCTemplate(relations.faction(), relations.values(), names, equipmentTable, helmet, chestplate, leggings, boots, primary, secondary, texture));
         });
         return templates;
     }

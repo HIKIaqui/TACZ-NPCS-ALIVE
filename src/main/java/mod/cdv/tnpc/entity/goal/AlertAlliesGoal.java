@@ -54,6 +54,11 @@ public class AlertAlliesGoal extends TargetGoal {
         return this.potentialTarget != null;
     }
 
+    @Override public boolean canContinueToUse() {
+        LivingEntity current = this.op.getTarget();
+        return current != null && !this.op.isAlliedTo(current) && super.canContinueToUse();
+    }
+
     @Override
     public void start() {
         this.targetMob = this.potentialTarget;

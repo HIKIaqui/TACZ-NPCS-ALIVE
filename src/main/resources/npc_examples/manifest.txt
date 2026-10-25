@@ -27,3 +27,8 @@ DIALOGOS.md
 COMBATE.md
 
 NIVEIS.md
+REPUTACAO.md
+config/tacznpc_reputation.json
+REPUTACAO-DIALOGOS.md
+config/tacznpc_greetings.json
+INTERESSES.md

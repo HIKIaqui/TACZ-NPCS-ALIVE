@@ -5,25 +5,67 @@
     "interests": [],
     "shareItems": true,
     "shareChance": 0.1,
-    "shareCooldownTicks": 1200
+    "shareCooldownTicks": 1200,
+    "maxCargoSlots": 15,
+    "pickupRetryTicks": 100
   },
   "loadouts": {
     "villagers": {
       "interests": [
-        "minecraft:bread",
-        "minecraft:carrot",
-        "minecraft:apple",
-        "minecraft:emerald",
-        "minecraft:iron_ingot",
-        "minecraft:leather"
+        {
+          "item": "minecraft:bread",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:carrot",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:apple",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:emerald",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:iron_ingot",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:leather",
+          "weight": 1,
+          "basePrice": 1
+        }
       ]
     },
     "illagers": {
       "interests": [
-        "minecraft:bread",
-        "minecraft:iron_ingot",
-        "minecraft:emerald",
-        "tacz:modern_kinetic_gun"
+        {
+          "item": "minecraft:bread",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:iron_ingot",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "minecraft:emerald",
+          "weight": 1,
+          "basePrice": 1
+        },
+        {
+          "item": "tacz:modern_kinetic_gun",
+          "weight": 1,
+          "basePrice": 1
+        }
       ]
     }
   },

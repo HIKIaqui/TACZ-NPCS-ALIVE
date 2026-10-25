@@ -57,7 +57,7 @@ public final class NpcInventoryTrades {
             || !NpcConversations.canTrade(npc, player) || !NpcInventoryConfig.forLoadout(npc.getTemplateId()).canTrade()) return;
         try {
             String reference = requested.equals("tnpc_inventory.json")
-                ? NpcInventoryConfig.tradeFile(npc.getTemplateId(), npc.getTemplate().aligned()) : requested;
+                ? NpcInventoryConfig.tradeFile(npc.getTemplateId(), java.util.Set.of(npc.getFactionId())) : requested;
             boolean generated = reference.isBlank();
             String file = generated ? "tnpc_generated.json" : NpcTradeService.resolveTradeFileName(player.server, reference);
             if (file == null) throw new IllegalArgumentException("Trade file not found: " + reference);
@@ -76,7 +76,7 @@ public final class NpcInventoryTrades {
                         String id = object.has("id") ? object.get("id").getAsString() : "offer_" + index;
                         var offer = definition.offerByIdOrIndex(id, index);
                         boolean locked = offer == null || !NpcTradeService.isOfferAvailable(player, offer)
-                            || !InventoryExchange.has(npc.getNpcInventory().cargoSnapshot(), totals(offer.result(), 1));
+                            || !InventoryExchange.has(npc.getNpcInventory().cargoSnapshot(), totals(offer.result(), 1), s -> !NpcInventoryConfig.forLoadout(npc.getTemplateId()).protectedItem(s));
                         object.addProperty("locked", locked);
                     }
                     index++;
@@ -108,8 +108,10 @@ public final class NpcInventoryTrades {
             }
             List<ItemStack> playerItems = new ArrayList<>();
             for (int i = 0; i < 36; i++) playerItems.add(player.getInventory().getItem(i).copy());
-            var plan = InventoryExchange.plan(playerItems, npc.getNpcInventory().cargoSnapshot(), totals(offer.cost(), amount), totals(offer.result(), amount));
-            if (plan == null) {
+            var plan = InventoryExchange.plan(playerItems, npc.getNpcInventory().cargoSnapshot(), totals(offer.cost(), amount), totals(offer.result(), amount),
+                Math.max(NpcInventoryConfig.forLoadout(npc.getTemplateId()).maxCargoSlots(),npc.getNpcInventory().cargoSnapshot().size()),
+                s -> !NpcInventoryConfig.forLoadout(npc.getTemplateId()).protectedItem(s));
+            if (plan == null || !npc.getNpcInventory().canReplaceCargo(plan.npc())) {
                 message(player, "Not enough items, NPC stock, or inventory space."); return false;
             }
             npc.getNpcInventory().replaceCargo(plan.npc());
