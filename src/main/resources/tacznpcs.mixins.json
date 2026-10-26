@@ -9,7 +9,8 @@
   ],
   "client": [
     "DialogueScreenMixin",
-    "TradeScreenMixin"
+    "TradeScreenMixin",
+    "TradeItemPreviewMixin"
   ],
   "injectors": {
     "defaultRequire": 1

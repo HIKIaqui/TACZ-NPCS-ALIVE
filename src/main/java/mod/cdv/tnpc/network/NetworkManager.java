@@ -7,7 +7,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class NetworkManager {
-    public static final String PROTOCOL_VERSION = "2";
+    public static final String PROTOCOL_VERSION = "3";
 
     public static void register(IEventBus modBus) {
         modBus.addListener(NetworkManager::registerPackets);
@@ -15,6 +15,7 @@ public class NetworkManager {
 
     private static void registerPackets(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
+        registrar.playToClient(TradeRefreshPacket.TYPE, TradeRefreshPacket.STREAM_CODEC, TradeRefreshPacket::handle);
         registrar.playBidirectional(ConversationClosePacket.TYPE, ConversationClosePacket.STREAM_CODEC, ConversationClosePacket::handle);
         registrar.playToClient(AnimationPacket.TYPE, AnimationPacket.STREAM_CODEC, AnimationPacket::handle);
     }

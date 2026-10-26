@@ -59,12 +59,13 @@ Estas condições podem aparecer em `when` ou no campo `condition` de uma opçã
 
 | Tipo | Parâmetros | Significado |
 | --- | --- | --- |
-| `tnpc.faction` | `id` | O conjunto `aligned` do template contém esse ID exato. |
+| `tnpc.reputation` | `min`, `max` ou `amount` | Compara a reputação efetiva (facção + pessoal), inclusive nos limites. |
+| `tnpc.faction` | `id` | A identidade `faction` atual do NPC corresponde a esse ID exato. |
 | `tnpc.loadout` | `id` | ID exato do loadout atual do NPC. |
 | `tnpc.uuid` | `id` | UUID exato do NPC. |
 | `tnpc.healthy` | `min`, `max` | Fração de vida atual do NPC, entre 0 e 1. |
 
-`tnpc.faction` usa os mesmos identificadores já usados nos templates, inclusive categorias se estiverem em `aligned`; não cria nem altera facções. Use `all`, `any`, `not` e `expected: false` para combinar/inverter condições. As condições nativas do ADM (como dimensão, bioma, horário, flags, itens e nível) também funcionam. `health` nativo se refere ao jogador; use `tnpc.healthy` para o NPC.
+`tnpc.faction` consulta a identidade explícita de facção do NPC; relações positivas não concedem afiliação. Use `all`, `any`, `not` e `expected: false` para combinar/inverter condições. As condições nativas do ADM (como dimensão, bioma, horário, flags, itens e nível) também funcionam. `health` nativo se refere ao jogador; use `tnpc.healthy` para o NPC.
 
 As condições das opções são verificadas pelo ADM ao abrir e novamente ao receber a escolha no servidor. Esta integração não atualiza em tempo real o menu já aberto quando uma condição muda; reabra a conversa para atualizar as opções visíveis.
 
@@ -102,3 +103,5 @@ Os perfis usam o JSON nativo do ADM, com um `start` fixo e `nodes`. Exemplo `sta
 Com `append`, os nós genéricos recebem IDs internos novos para evitar colisões; os links `next` são remapeados. A saudação e o estilo do perfil específico são mantidos. Escreva os assuntos genéricos com `action: "back"` para retornarem ao menu em que foram abertos. `random_start` não é aceito neste integrador: use regras para escolher saudações por contexto. Em `fallback`, despedidas com `close: true` não contam como assunto disponível.
 
 Clique agachado permite passar pela interação normal da entidade. Hostilidade, combate, dano, distância e linha de visão são sempre verificados no servidor e não podem ser removidos apenas com uma condição de texto.
+
+Saudações por reputação são configuradas em `tacznpc_greetings.json`. Veja `REPUTACAO-DIALOGOS.md` para prioridade, alternativas e exemplos das condições.

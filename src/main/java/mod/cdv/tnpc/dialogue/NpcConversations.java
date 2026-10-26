@@ -59,6 +59,7 @@ public final class NpcConversations {
             DialogueProfiles.Snapshot candidate = DialogueProfiles.read(configPath);
             DialogueReplies.Settings candidateReplies = DialogueReplies.read(configPath.resolveSibling("tacznpc_dialogue_replies.json"));
             ReputationGreetings.Settings candidateGreetings = ReputationGreetings.read(configPath.resolveSibling("tacznpc_greetings.json"));
+            var candidateRequests = mod.cdv.tnpc.requests.RequestConfig.read(configPath.resolveSibling("tacznpc_requests.json"));
             for (String json : candidate.dialogues().values())
                 ConversationMenu.compile(json, mod.cdv.tnpc.quest.QuestDefinition.Lines.EMPTY,
                     candidateReplies.defaults(), bound -> 0, candidateGreetings.longest());
@@ -70,6 +71,7 @@ public final class NpcConversations {
             config = candidate;
             replies = candidateReplies;
             greetings = candidateGreetings;
+            mod.cdv.tnpc.requests.NpcRequests.configure(candidateRequests);
             LOGGER.info("NPC dialogues loaded: {} rules", candidate.rules().size());
             return true;
         } catch (IOException | RuntimeException exception) {
@@ -101,6 +103,7 @@ public final class NpcConversations {
                 mod.cdv.tnpc.quest.NpcQuests.dialogueLines(npc), replies.forLoadout(npc.getTemplateId()), npc.getRandom()::nextInt,
                 greetings.select(npc.getTemplateId(),npc.getFactionId(),
                     mod.cdv.tnpc.reputation.ReputationAccess.effective(npc,player),npc.getRandom()::nextInt));
+            json = mod.cdv.tnpc.requests.NpcRequests.decorate(json,npc,player);
             AdmDialogueApi.registerDialogue(dialogue, json);
         } catch (RuntimeException failure) {
             AdmDialogueApi.unregisterDialogue(dialogue);
@@ -193,6 +196,13 @@ public final class NpcConversations {
             || !talk.adm().dialogueFile().equals(event.getDialogueFile())) {
             event.setCanceled(true);
             if (talk != null && talk.player() == event.getPlayer()) close(talk);
+            return;
+        }
+        if(event.getChoice().id().startsWith("tnpc_request_")) {
+            event.setCanceled(true);
+            boolean delivered=mod.cdv.tnpc.requests.NpcRequests.deliver(npc,event.getPlayer(),event.getChoice().id());
+            mod.cdv.tnpc.inventory.NpcInventoryTrades.message(event.getPlayer(),delivered ? "Supplies delivered. Thank you!" : "Could not deliver: check supplies, NPC capacity, or reopen the conversation.");
+            if(delivered) close(talk);
             return;
         }
         if (event.getChoice().id().equals("tnpc_inventory_gift")) {

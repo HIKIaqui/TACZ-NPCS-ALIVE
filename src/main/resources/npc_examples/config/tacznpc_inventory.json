@@ -1,13 +1,21 @@
 {
   "defaults": {
     "canTrade": true,
-    "tradeFile": "",
     "interests": [],
     "shareItems": true,
     "shareChance": 0.1,
     "shareCooldownTicks": 1200,
     "maxCargoSlots": 15,
-    "pickupRetryTicks": 100
+    "pickupRetryTicks": 100,
+    "reputationPricePercent": {
+      "vilanizado": 100,
+      "hostil": 50,
+      "odiado": 25,
+      "neutro": 0,
+      "amigavel": -5,
+      "aliado": -10,
+      "idolizado": -20
+    }
   },
   "loadouts": {
     "villagers": {
@@ -69,14 +77,20 @@
       ]
     }
   },
-  "factionTrades": {
-    "villagers": "villagers.json",
-    "illagers": "illagers.json"
-  },
-  "genericTrades": {
-    "currency": "minecraft:emerald",
-    "quantity": 1,
-    "buyPrice": 1,
-    "sellPrice": 1
+  "commerce": {
+    "currencies": [
+      {
+        "item": "minecraft:emerald",
+        "value": 1
+      },
+      {
+        "item": "minecraft:emerald_block",
+        "value": 60
+      },
+      {
+        "item": "minecraft:netherite_block",
+        "value": 3600
+      }
+    ]
   }
 }

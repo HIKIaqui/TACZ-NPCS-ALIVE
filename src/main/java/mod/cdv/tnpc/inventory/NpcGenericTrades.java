@@ -1,42 +1,55 @@
 package mod.cdv.tnpc.inventory;
 
 import com.google.gson.*;
+import com.mojang.serialization.JsonOps;
 import java.util.*;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
-import com.tacz.guns.item.ModernKineticGunItem;
 
-/** Generates server-owned offer definitions; never generates stock or currency. */
+/** Server-owned quotes for exact cargo variants; equipment and configured currencies never become goods. */
 public final class NpcGenericTrades {
-    public static String create(NpcInventoryConfig.Profile profile, NpcInventoryConfig.Generic prices, List<ItemStack> cargo) {
-        var currencyId = ResourceLocation.parse(prices.currency());
-        Item currency = BuiltInRegistries.ITEM.get(currencyId);
-        if (currency == Items.AIR) throw new IllegalArgumentException("Unknown generic trade currency: " + currencyId);
-        // Desired goods can be bought even before the NPC owns any; carried spare equipment can also be sold.
-        Set<Item> desired = new LinkedHashSet<>();
-        for (Item item : BuiltInRegistries.ITEM) if (item != currency && item != Items.AIR && profile.interested(new ItemStack(item))) desired.add(item);
-        Set<Item> goods = new LinkedHashSet<>(desired);
-        for (ItemStack stack : cargo) if (!stack.isEmpty() && stack.getItem() != currency
-            && (stack.getItem() instanceof ArmorItem || stack.getItem() instanceof ModernKineticGunItem)) goods.add(stack.getItem());
-        JsonObject root = new JsonObject(); root.addProperty("title", "Trade");
-        root.addProperty("subtitle", "Real stock. Buy and sell prices are set by the server.");
-        JsonArray offers = new JsonArray(); root.add("offers", offers);
-        for (Item item : goods) {
-            String id = BuiltInRegistries.ITEM.getKey(item).toString();
-            int quantity = Math.min(prices.quantity(), item.getDefaultMaxStackSize());
-            // Buy = NPC buys from player; sell = NPC sells to player.
-            if (desired.contains(item)) offers.add(offer("buy_" + id, "Sell " + item.getDescription().getString(), id, quantity, prices.currency(), prices.buyPrice()));
-            if(!profile.protectedItem(new ItemStack(item))) offers.add(offer("sell_" + id, "Buy " + item.getDescription().getString(), prices.currency(), prices.sellPrice(), id, quantity));
+    public record Quote(String id,ItemStack prototype,CurrencySolver.Payment payment) {
+        public Quote { prototype=prototype.copyWithCount(1); }
+        @Override public ItemStack prototype() { return prototype.copy(); }
+    }
+    public record Shop(List<Quote> quotes,long reputation) {}
+    public static Shop create(NpcInventoryConfig.Profile profile,List<CommerceSettings.Currency> currencies,
+                              List<ItemStack> cargo,long reputation) {
+        var solver=CommerceSettings.solver(currencies);
+        Set<String> currencyIds=new HashSet<>(); currencies.forEach(c->currencyIds.add(c.item()));
+        List<Quote> quotes=new ArrayList<>();
+        for(var stack:cargo) {
+            if(stack.isEmpty() || profile.protectedItem(stack) || profile.basePrice(stack).isEmpty()
+                || currencyIds.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) continue;
+            if(quotes.stream().anyMatch(q->ItemStack.isSameItemSameComponents(q.prototype(),stack))) continue;
+            var payment=solver.solve(CommerceSettings.price(profile.basePrice(stack).orElseThrow(),reputation,profile.reputationPricePercent()));
+            // No positive payable value below this price: hide, never grant free items or round up.
+            if(payment.value()==0) continue;
+            quotes.add(new Quote("stock_"+quotes.size(),stack,payment));
         }
-        if (root.toString().length() > 28000) throw new IllegalArgumentException("Too many generic offers for ADM; narrow interests or configure a custom tradeFile");
+        return new Shop(List.copyOf(quotes),reputation);
+    }
+    public static String json(Shop shop,List<ItemStack> cargo,NpcInventoryConfig.Profile profile,HolderLookup.Provider lookup) {
+        JsonObject root=new JsonObject(); root.addProperty("title","Trade");
+        root.addProperty("subtitle","Real stock | Reputation: "+shop.reputation()+" | Fixed payment; no change");
+        JsonArray offers=new JsonArray(); root.add("offers",offers);
+        var ops=lookup.createSerializationContext(JsonOps.INSTANCE);
+        for(var quote:shop.quotes()) {
+            var stack=quote.prototype(); long stock=InventoryExchange.stock(cargo,stack,s->!profile.protectedItem(s));
+            JsonObject offer=new JsonObject(); offer.addProperty("id",quote.id());
+            offer.addProperty("title",stack.getHoverName().getString()+" | Stock: "+stock);
+            offer.addProperty("locked",stock<1 || profile.protectedItem(stack));
+            JsonArray cost=new JsonArray();
+            quote.payment().counts().forEach((id,count)->cost.add(item(id,count))); offer.add("cost",cost);
+            offer.add("result",item(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),1));
+            // ADM only knows item IDs. Our client bridge renders this exact component-preserving preview.
+            offer.add("tnpcStack",ItemStack.CODEC.encodeStart(ops,stack).getOrThrow());
+            offers.add(offer);
+        }
         return root.toString();
     }
-    private static JsonObject offer(String id, String title, String cost, int costCount, String result, int resultCount) {
-        JsonObject o = new JsonObject(); o.addProperty("id", id); o.addProperty("title", title);
-        o.add("cost", item(cost,costCount)); o.add("result", item(result,resultCount)); return o;
-    }
-    private static JsonObject item(String id, int count) {
-        JsonObject o = new JsonObject(); o.addProperty("item",id); o.addProperty("count",count); return o;
+    private static JsonObject item(String id,int count) {
+        JsonObject item=new JsonObject(); item.addProperty("item",id); item.addProperty("count",count); return item;
     }
 }

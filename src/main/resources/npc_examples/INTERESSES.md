@@ -1,9 +1,7 @@
 # Interesses, preços base e capacidade
 
 Versão: 2.1.0-hiki.interests.1. Inclui os dois patches de reputação e recursos anteriores.
-Esta etapa prepara os interesses e a capacidade para o futuro comércio com moedas.
-Preços base são metadados por unidade; a loja atual ainda usa seus preços/arquivos antigos.
-Conversão de moedas e modificadores de preço por reputação entram no próximo patch.
+Esta etapa define interesses e capacidade. No patch Comércio v0.1, `basePrice` também passou a controlar os preços reais da loja, com moedas e reputação. Consulte `COMERCIO.md` para as regras atuais de comércio.
 
 ## Capacidade
 
@@ -67,7 +65,7 @@ a peso 1, preço base 1 e protected=false. A forma expandida permite:
 Os números do exemplo são ilustrativos para configurar o seu balanceamento.
 - item ou tag: exatamente um deles. Inclua namespace; no campo tag não escreva #.
 - weight: interesse por unidade, de 0 a 1.000.000, podendo ser decimal. Zero não atrai coleta.
-- basePrice: preço por unidade na moeda base futura, inteiro de 1 a 1.000.000.000.
+- basePrice: preço por unidade na menor unidade monetária configurada, inteiro de 1 a 1.000.000.000.
 - protected: não descartar, compartilhar nem entregar em troca a partir da carga.
 
 IDs duplicados na mesma lista são rejeitados, inclusive string e objeto para o mesmo ID.

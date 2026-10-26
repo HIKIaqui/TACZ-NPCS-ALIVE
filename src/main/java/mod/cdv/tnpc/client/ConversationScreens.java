@@ -10,6 +10,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 @EventBusSubscriber(modid = "tacznpcs", value = Dist.CLIENT)
 public final class ConversationScreens {
+    public static void refresh(mod.cdv.tnpc.network.TradeRefreshPacket packet) {
+        if(Minecraft.getInstance().screen instanceof TradeScreenAccessor trade
+            && trade.tnpc$tradeNpc().equals(packet.npc()) && trade.tnpc$tradeFile().equals(packet.file())) trade.tnpc$refresh(packet.json());
+    }
     public static void close(ConversationClosePacket packet) {
         Minecraft client = Minecraft.getInstance();
         if (client.screen instanceof TradeScreenAccessor trade && trade.tnpc$tradeNpc().equals(packet.npc())

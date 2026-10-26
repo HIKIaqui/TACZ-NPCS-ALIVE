@@ -1,0 +1,8 @@
+allprojects {
+    afterEvaluate {
+        sourceSets.main.java.srcDir 'validation/server'
+        tasks.named('jar') { exclude 'mod/cdv/tnpc/validation/**' }
+        tasks.named('sourcesJar') { exclude 'mod/cdv/tnpc/validation/**' }
+        neoForge.runs.server { systemProperty 'tnpc.worldgenTest', 'true' }
+    }
+}

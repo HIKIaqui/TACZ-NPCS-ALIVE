@@ -4,10 +4,8 @@ package mod.cdv.tnpc;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
-import java.util.ArrayList;
 import mod.cdv.tnpc.client.FakePlayerPlayerAnimatorEvent;
 import mod.cdv.tnpc.client.render.AutoGunOperatorRenderer;
-import mod.cdv.tnpc.data.StructureTemplate;
 import mod.cdv.tnpc.data.NpcBehaviorConfig;
 import mod.cdv.tnpc.data.TemplateDataManager;
 import mod.cdv.tnpc.entity.AutoGunOperator;
@@ -16,18 +14,7 @@ import mod.cdv.tnpc.entity.EntityRegistry;
 import mod.cdv.tnpc.network.NetworkManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Position;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -39,7 +26,6 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import org.slf4j.Logger;
 
@@ -111,35 +97,6 @@ public class TNPC {
             if (templatesLoaded) context.getSource().sendSuccess(() -> Component.literal("NPC loadouts, factions and structures reloaded"), false);
             return 1;
         }));
-    }
-
-    @EventBusSubscriber(modid="tacznpcs", bus=EventBusSubscriber.Bus.GAME)
-    public static class StructureSpawnHandler {
-        @SubscribeEvent
-        public static void onFinalizeSpawn(FinalizeSpawnEvent event) {
-            if (event.getSpawnType() == MobSpawnType.STRUCTURE || event.getSpawnType() == MobSpawnType.NATURAL) {
-                ServerLevel level = event.getLevel().getLevel();
-                String originalEntityId = EntityType.getKey((EntityType)event.getEntity().getType()).toString();
-                Vec3 spawnPos = new Vec3(event.getX(), event.getY(), event.getZ());
-                BlockPos blockPos = BlockPos.containing((Position)spawnPos);
-                for (Structure structure : level.structureManager().getAllStructuresAt(blockPos).keySet()) {
-                    ResourceLocation structureLocation = level.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(structure);
-                    if (structureLocation == null) continue;
-                    String structureId = structureLocation.toString();
-                    ArrayList<StructureTemplate> templateArr = TemplateDataManager.STRUCTURES.getOrDefault(structureId, new ArrayList());
-                    for (StructureTemplate template : templateArr) {
-                        if (!template.toReplace().contains(originalEntityId) || !(level.random.nextFloat() < template.chance())) continue;
-                        AutoGunOperator op = AutoGunOperator.create((Level)level, template.loadout());
-                        op.moveTo(spawnPos);
-                        op.setXRot(event.getEntity().getXRot());
-                        op.setYRot(event.getEntity().getYRot());
-                        level.addFreshEntity((Entity)op);
-                        event.getEntity().discard();
-                        event.setSpawnCancelled(true);
-                    }
-                }
-            }
-        }
     }
 
     @EventBusSubscriber(modid="tacznpcs", bus=EventBusSubscriber.Bus.MOD, value={Dist.CLIENT})

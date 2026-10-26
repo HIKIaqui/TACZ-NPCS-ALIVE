@@ -26,7 +26,6 @@ Caminhos relativos à pasta `config/` real:
 |---|---|
 | `tacznpc_loadouts.json` | Equipamento inicial, skins, nomes, aliados e inimigos. |
 | `tacznpc_factions.json` | Tipos de entidades pertencentes a cada facção. |
-| `tacznpc_quests.json` e `tacznpc_quests/*.json` | Missões, regras de aceitação, objetivos, XP e falas preparadas. Veja `MISSOES.md`. |
 | `tacznpc_structures.json` | Substituição de entidades durante geração de estruturas. |
 | `tacznpc_behavior.json` | Descanso, percepção, fuga e fogueiras. |
 | `tacznpc_offline_actions.json` | Carteira de tempo, custos, pesos e ações habilitadas. |
@@ -213,3 +212,11 @@ Após editar, execute `/tacznpcs_reload`. O reload das ações offline e das lis
 JSON não aceita comentários nem vírgula após o último campo. Nas listas de loot, use `biomes` para os seletores e `pools → entries` para os sorteios; o arquivo `default.json` não contém seletores.
 
 A partir do patch de interesses, carga nova tem 15 slots por padrão, configuráveis por loadout até 36. Interesses aceitam objetos com weight/basePrice/protected. Veja INTERESSES.md para substituição, proteção, compatibilidade e herança.
+
+## Comércio com moedas — atualização v0.1
+
+A loja dos NPCs agora é gerada exclusivamente pela carga real. Configure `basePrice` nos interesses, `reputationPricePercent` em `defaults`/`loadouts` e `commerce.currencies` na raiz de `tacznpc_inventory.json`. As antigas opções `genericTrades`, `factionTrades` e `tradeFile` não controlam mais essas lojas. Consulte `COMERCIO.md` para o formato completo e as regras de conversão.
+
+## Pedidos por interesses — v0.1
+
+A opção `Need help with something?` agora oferece pedidos derivados dos interesses do loadout. Configuração de recompensa, habilitação e intervalo em `config/tacznpc_requests.json`; regras e exemplos em `PEDIDOS.md`. A carga, o equipamento e os limites fixos de estoque 8/1 determinam os candidatos. Abaixo da média de interesse fica fora; entre os demais, o peso de sorteio é média/interesse.

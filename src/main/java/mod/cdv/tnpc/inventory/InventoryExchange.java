@@ -67,6 +67,28 @@ public final class InventoryExchange {
         if(n.size()>maxNpcSlots) return null;
         return new Plan(p, n);
     }
+    /** Exact component-aware delivery; payment may be paid across multiple player slots. */
+    public static Plan exact(List<ItemStack> player,List<ItemStack> npc,Map<Item,Integer> cost,
+                             ItemStack prototype,int quantity,int maxNpcSlots,java.util.function.Predicate<ItemStack> canGive) {
+        if(cost.isEmpty() || prototype.isEmpty() || quantity<1) return null;
+        List<ItemStack> p=copy(player), n=copy(npc);
+        var payment=take(p,cost); if(payment==null) return null;
+        List<ItemStack> delivery=new ArrayList<>(); int remaining=quantity;
+        for(var stack:n) if(!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack,prototype) && canGive.test(stack)) {
+            int take=Math.min(remaining,stack.getCount()); if(take>0) delivery.add(stack.split(take));
+            remaining-=take; if(remaining==0) break;
+        }
+        if(remaining!=0) return null;
+        for(var stack:delivery) if(!insertPlayer(p,stack)) return null;
+        n.removeIf(ItemStack::isEmpty);
+        for(var stack:payment) insert(n,stack);
+        return n.size()>maxNpcSlots ? null : new Plan(p,n);
+    }
+    public static long stock(List<ItemStack> cargo,ItemStack prototype,java.util.function.Predicate<ItemStack> allowed) {
+        long count=0;
+        for(var s:cargo) if(!s.isEmpty() && ItemStack.isSameItemSameComponents(s,prototype) && allowed.test(s)) count+=s.getCount();
+        return count;
+    }
     public static boolean has(List<ItemStack> stacks,Map<Item,Integer> required,java.util.function.Predicate<ItemStack> allowed) {
         return take(copy(stacks),required,allowed)!=null;
     }
