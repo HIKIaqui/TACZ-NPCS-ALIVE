@@ -66,7 +66,7 @@ extends Goal {
     private boolean isValidTarget() {
         LivingEntity target = this.mob.getTarget();
         return target != null && target.isAlive() && !target.isSpectator()
-            && this.mob.canAttack(target) && !this.mob.isAlliedTo(target);
+            && this.mob.canAttack(target) && !this.mob.isAlliedTo(target) && mod.cdv.tnpc.companion.CompanionCombat.permits(mob,target);
     }
 
     @Override
@@ -100,6 +100,7 @@ extends Goal {
             boolean flag = this.mob.getSensing().hasLineOfSight((Entity)livingentity);
             var profile = mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(mob.getTemplateId());
             var weapon = profile.weapon(mob.combatGunType());
+            var modifier = profile.modifier(mob.combatGunId());
             long now = mob.level().getGameTime();
             combat.observe(livingentity.getUUID(), flag, now, profile, mob.getRandom()::nextInt);
             boolean bl = flag1 = this.seeTime > 0;
@@ -137,7 +138,8 @@ extends Goal {
                 return;
             }
             this.mob.getLookControl().setLookAt((Entity)livingentity, 30.0f, 30.0f);
-            this.mob.aim(flag && d0 >= profile.aimDistance() * profile.aimDistance());
+            double aimDistance=modifier.aimDistance(profile.aimDistance());
+            this.mob.aim(flag && d0 >= aimDistance * aimDistance);
             if (this.gunState == GunState.EMPTY) {
                 ((AutoGunOperator)(this.mob)).reload();
                 this.gunState = GunState.RELOADING;
@@ -155,7 +157,7 @@ extends Goal {
             } else if (this.gunState == GunState.READY_TO_ATTACK && combat.mayFire(livingentity.getUUID(), flag, now)) {
                 var error = mod.cdv.tnpc.entity.ai.CombatAim.offset(profile, Math.sqrt(d0), mob.getRandom().nextDouble(), mob.getRandom().nextDouble(),
                     mod.cdv.tnpc.quest.QuestConfig.settings().progression().aimError().multiplier(
-                        mod.cdv.tnpc.quest.NpcQuests.level(mob)));
+                        mod.cdv.tnpc.quest.NpcQuests.level(mob)) * modifier.aimErrorMultiplier());
                 float pitch = Math.max(-89.9f, Math.min(89.9f, mob.getViewXRot(1.0f) + error.pitch()));
                 float yaw = mob.getViewYRot(1.0f) + error.yaw();
                 // Stable suppliers: repeated reads/pellets share the same NPC aim centre.
@@ -173,7 +175,7 @@ extends Goal {
                     return;
                 }
                 if (this.lastResult == ShootResult.SUCCESS) {
-                    combat.fired(now, weapon.shotIntervalTicks().sample(mob.getRandom()::nextInt));
+                    combat.fired(now, modifier.shotIntervalTicks(weapon.shotIntervalTicks().sample(mob.getRandom()::nextInt)));
                     --this.attackBurst;
                     if (this.attackBurst <= 0) {
                         this.attackDelay();

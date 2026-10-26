@@ -22,7 +22,8 @@ public final class CompanionGoal extends Goal {
         var p=Companions.leader(npc);
         if(p==null || !p.isAlive() || p.isSpectator() || p.level()!=npc.level()){npc.getNavigation().stop();npc.setSprinting(false);return;}
         npc.getLookControl().setLookAt(p,30,30);double distance=npc.distanceToSqr(p);
-        npc.setSprinting(distance>64);
-        if(distance>9)npc.getNavigation().moveTo(p,1.1);else npc.getNavigation().stop();
+        boolean following=CompanionCombat.catchingUp(npc) && distance>Companions.followStopSqr(npc);
+        npc.setSprinting(following && distance>64);
+        if(following)npc.getNavigation().moveTo(p,1.1);else npc.getNavigation().stop();
     }
 }

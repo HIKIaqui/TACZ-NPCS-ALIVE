@@ -124,23 +124,28 @@ public final class NpcConversations {
             return InteractionResult.PASS;
         }
         talks.put(npc.getUUID(), new Talk(npc, player, session, npc.level().getGameTime() + config.maxDurationTicks()));
+        if(mod.cdv.tnpc.companion.Companions.owns(npc,player)) { npc.pauseCompanionCombat(); }
         npc.getNavigation().stop();
         return InteractionResult.CONSUME;
     }
     private static boolean talkingPlayer(ServerPlayer player) {
         return talks.values().stream().anyMatch(t -> t.player() == player);
     }
+    public static boolean holdingCompanionCombat(AutoGunOperator npc) {
+        var talk=talks.get(npc.getUUID());return talk!=null && mod.cdv.tnpc.companion.Companions.owns(npc,talk.player());
+    }
     private static boolean available(AutoGunOperator npc, ServerPlayer player) {
+        boolean owner=mod.cdv.tnpc.companion.Companions.owns(npc,player);
         if (config == null || !config.enabled() || !npc.isAlive() || npc.isRemoved() || !player.isAlive()
             || player.isSpectator() || npc.level() != player.level() || npc.getTemplate() == null
-            || npc.getTarget() != null || npc.isOnAlert() || npc.isOpposedTo(player) || npc.hurtTime > 0 || npc.isOnFire()
+            || (!owner && (npc.getTarget() != null || npc.isOnAlert() || npc.hurtTime > 0 || npc.isOnFire())) || npc.isOpposedTo(player)
             || npc.getVehicle() != null || npc.isPassenger() || npc.isLeashed()
             || npc.distanceToSqr(player) > config.maxDistance() * config.maxDistance()
             || npc.distanceToSqr(player) > net.aviel.dialogue.Config.maxInteractDistanceSqr()) return false;
-        if (npc.getPersistentData().contains("tnpcLastDamage")
+        if (!owner && npc.getPersistentData().contains("tnpcLastDamage")
             && npc.level().getGameTime() - npc.getPersistentData().getLong("tnpcLastDamage") < config.damageCooldownTicks()) return false;
         int lastDamage = npc.getLastHurtByMobTimestamp();
-        return (lastDamage == 0 || npc.tickCount - lastDamage >= config.damageCooldownTicks())
+        return (owner || lastDamage == 0 || npc.tickCount - lastDamage >= config.damageCooldownTicks())
             && npc.getSensing().hasLineOfSight(player);
     }
     public static ServerPlayer partner(AutoGunOperator npc) {
@@ -151,7 +156,7 @@ public final class NpcConversations {
         Talk talk = talks.get(npc.getUUID());
         return talk != null && talk.player() == player && available(npc,player)
             && mod.cdv.tnpc.reputation.ReputationAccess.canTrade(npc,player)
-            && npc.level().getGameTime() < talk.expires()
+            && (mod.cdv.tnpc.companion.Companions.owns(npc,player) || npc.level().getGameTime() < talk.expires())
             && player.server.getPlayerList().getPlayer(player.getUUID()) == player
             && player.serverLevel().getEntity(npc.getUUID()) == npc;
     }
@@ -160,7 +165,7 @@ public final class NpcConversations {
                 || mod.cdv.tnpc.inventory.NpcInventoryTrades.active(talk.npc(),talk.player()))
             && talk.player().server.getPlayerList().getPlayer(talk.player().getUUID()) == talk.player()
             && talk.player().serverLevel().getEntity(talk.npc().getUUID()) == talk.npc()
-            && talk.npc().level().getGameTime() < talk.expires() && available(talk.npc(), talk.player());
+            && (mod.cdv.tnpc.companion.Companions.owns(talk.npc(),talk.player()) || talk.npc().level().getGameTime() < talk.expires()) && available(talk.npc(), talk.player());
     }
     private static void close(Talk talk) {
         talks.remove(talk.npc().getUUID(), talk);
@@ -179,8 +184,10 @@ public final class NpcConversations {
         if (talk.adm().dialogueFile().equals(file)) close(talk);
     }
     @SubscribeEvent public void damaged(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
-        if (event.getEntity() instanceof AutoGunOperator npc)
-            npc.getPersistentData().putLong("tnpcLastDamage", npc.level().getGameTime());
+        if(event.getEntity() instanceof AutoGunOperator npc && event.getNewDamage()>0) {
+            npc.getPersistentData().putLong("tnpcLastDamage",npc.level().getGameTime());
+            var talk=talks.get(npc.getUUID());if(talk!=null)close(talk);
+        }
     }
     @SubscribeEvent public void tick(ServerTickEvent.Post event) {
         for (Talk talk : List.copyOf(talks.values())) if (!valid(talk)) close(talk);

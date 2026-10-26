@@ -14,15 +14,26 @@ import net.minecraft.world.phys.Vec3;
 /** Persistent ownership and orders. No chunk tickets, remote simulation, or client-owned inventory changes. */
 public final class Companions {
     private static final String KEY="tnpcCompanion";
-    public static UUID owner(AutoGunOperator npc) { var t=npc.getPersistentData().getCompound(KEY);return t.hasUUID("owner") ? t.getUUID("owner") : null; }
+    public static UUID owner(AutoGunOperator npc) { if(npc.level().isClientSide)return npc.syncedCompanionOwner();var t=npc.getPersistentData().getCompound(KEY);return t.hasUUID("owner") ? t.getUUID("owner") : null; }
     public static boolean active(AutoGunOperator npc) { return owner(npc)!=null; }
     public static boolean owns(AutoGunOperator npc,ServerPlayer p) { return p.getUUID().equals(owner(npc)); }
     public static boolean waiting(AutoGunOperator npc) { return active(npc) && npc.getPersistentData().getCompound(KEY).getBoolean("waiting"); }
+    /** Existing saves default to near: twelve blocks out, five back in. */
+    public static boolean staysAfar(AutoGunOperator npc) { return npc.getPersistentData().getCompound(KEY).getBoolean("stayAfar"); }
+    public static double followStartSqr(AutoGunOperator npc) { return staysAfar(npc) ? 1024 : 144; }
+    public static double followStopSqr(AutoGunOperator npc) { return staysAfar(npc) ? 144 : 25; }
+    private static boolean distanceOrder(AutoGunOperator npc,boolean afar) {
+        var t=npc.getPersistentData().getCompound(KEY);t.putBoolean("stayAfar",afar);t.putBoolean("catchingUp",false);
+        npc.getNavigation().stop();npc.setSprinting(false);CompanionCombat.update(npc);return true;
+    }
     public static Vec3 anchor(AutoGunOperator npc) { var t=npc.getPersistentData().getCompound(KEY);return new Vec3(t.getDouble("x"),t.getDouble("y"),t.getDouble("z")); }
     public static ServerPlayer leader(AutoGunOperator npc) { var id=owner(npc);return id==null || npc.level().getServer()==null ? null : npc.level().getServer().getPlayerList().getPlayer(id); }
-    public static void dismiss(AutoGunOperator npc) { npc.getPersistentData().remove(KEY);npc.getNavigation().stop();npc.setSprinting(false); }
+    public static void dismiss(AutoGunOperator npc) { CompanionCombat.clearSupport(npc);npc.getPersistentData().remove(KEY);npc.syncCompanionOwner(null);npc.getNavigation().stop();npc.setSprinting(false); }
     public static void tick(AutoGunOperator npc) {
-        if(!active(npc) || npc.tickCount%20!=0) return;
+        npc.syncCompanionOwner(owner(npc));
+        if(!active(npc))return;
+        CompanionCombat.update(npc);
+        if(npc.tickCount%20!=0)return;
         var p=leader(npc);
         if(p!=null && (npc.getTarget()==p || npc.isOpposedTo(p))) dismiss(npc);
     }
@@ -32,10 +43,14 @@ public final class Companions {
         if(!authorized(npc,p)) return false;
         if(id.equals("tnpc_companion_join")) {
             if(active(npc) || !ReputationConfig.settings().allied(ReputationAccess.effective(npc,p))) return false;
-            var t=new CompoundTag();t.putUUID("owner",p.getUUID());t.putBoolean("waiting",false);npc.getPersistentData().put(KEY,t);npc.getNavigation().stop();npc.endResting();return true;
+            var t=new CompoundTag();t.putUUID("owner",p.getUUID());t.putBoolean("waiting",false);t.putBoolean("defensive",true);npc.getPersistentData().put(KEY,t);npc.syncCompanionOwner(p.getUUID());npc.getNavigation().stop();npc.endResting();return true;
         }
         if(!owns(npc,p)) return false;
         return switch(id) {
+            case "tnpc_companion_defensive" -> { npc.getPersistentData().getCompound(KEY).putBoolean("defensive",true);npc.setTarget(null);yield true; }
+            case "tnpc_companion_aggressive" -> { npc.getPersistentData().getCompound(KEY).putBoolean("defensive",false);yield true; }
+            case "tnpc_companion_stay_near" -> distanceOrder(npc,false);
+            case "tnpc_companion_stay_afar" -> distanceOrder(npc,true);
             case "tnpc_companion_wait" -> { var t=npc.getPersistentData().getCompound(KEY);t.putBoolean("waiting",true);t.putDouble("x",npc.getX());t.putDouble("y",npc.getY());t.putDouble("z",npc.getZ());npc.getNavigation().stop();yield true; }
             case "tnpc_companion_resume" -> { npc.getPersistentData().getCompound(KEY).putBoolean("waiting",false);npc.getNavigation().stop();yield true; }
             case "tnpc_companion_leave" -> { dismiss(npc);yield true; }
@@ -44,15 +59,17 @@ public final class Companions {
         };
     }
     private static boolean equip(AutoGunOperator npc,ServerPlayer p) {
-        var incoming=p.getMainHandItem();if(incoming.isEmpty() || !npc.canHoldItem(incoming)) return false;
+        boolean offhand=!p.getOffhandItem().isEmpty();var incoming=offhand ? p.getOffhandItem() : p.getMainHandItem();if(incoming.isEmpty() || !npc.canHoldItem(incoming)) return false;
         EquipmentSlot slot=npc.getEquipmentSlotForItem(incoming);if(slot==EquipmentSlot.BODY) return false;
         // Explicit orders may downgrade equipment. Transfer ONE item and preserve the rest of the hand stack.
         var replacement=incoming.copyWithCount(1);var previous=npc.getItemBySlot(slot).copy();
-        var slots=InventoryExchange.copy(p.getInventory().items);slots.get(p.getInventory().selected).shrink(1);
+        var slots=InventoryExchange.copy(p.getInventory().items);int offIndex=slots.size();
+        slots.add(p.getOffhandItem().copy());slots.get(offhand ? offIndex : p.getInventory().selected).shrink(1);
         if(!previous.isEmpty() && !InventoryExchange.insertPlayer(slots,previous)) return false;
         npc.setItemSlot(slot,replacement);
         if(slot==EquipmentSlot.MAINHAND) npc.refreshOrderedEquipment();
-        for(int i=0;i<slots.size();i++) p.getInventory().setItem(i,slots.get(i));
+        for(int i=0;i<offIndex;i++) p.getInventory().setItem(i,slots.get(i));
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,slots.get(offIndex));
         p.getInventory().setChanged();p.containerMenu.broadcastChanges();return true;
     }
     private static JsonObject action(String text,String id) { var c=new JsonObject();c.addProperty("text",text);c.addProperty("id",id);c.addProperty("close",true);return c; }
@@ -76,6 +93,13 @@ public final class Companions {
             String id="tnpc_orders";while(nodes.has(id))id="_"+id;
             var orders=new JsonObject();orders.addProperty("text",waiting(npc) ? "I'm holding this position. What do you need?" : "What are your orders?");
             var choices=new JsonArray();choices.add(waiting(npc) ? action("Follow me.","tnpc_companion_resume") : action("Wait here.","tnpc_companion_wait"));
+            String combatId="tnpc_combat";while(nodes.has(combatId) || combatId.equals(id))combatId="_"+combatId;
+            var combat=new JsonObject();combat.addProperty("text","How should I handle combat?");
+            var combatChoices=new JsonArray();
+            combatChoices.add(CompanionCombat.defensive(npc) ? action("Attack enemies on sight.","tnpc_companion_aggressive") : action("Never attack first.","tnpc_companion_defensive"));
+            combatChoices.add(staysAfar(npc) ? action("Stay close to me.","tnpc_companion_stay_near") : action("Keep your distance.","tnpc_companion_stay_afar"));
+            combatChoices.add(link("Back.",id));combat.add("choices",combatChoices);nodes.add(combatId,combat);
+            choices.add(link("About Combat…",combatId));
             choices.add(action("Give Equipment.","tnpc_companion_equip"));choices.add(action("Stop following me.","tnpc_companion_leave"));choices.add(link("Back.",start));orders.add("choices",choices);nodes.add(id,orders);
             var menu=nodes.getAsJsonObject(start).getAsJsonArray("choices");var updated=new JsonArray();updated.add(link("Orders.",id));menu.forEach(updated::add);nodes.getAsJsonObject(start).add("choices",updated);
         }

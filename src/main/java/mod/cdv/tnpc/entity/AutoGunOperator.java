@@ -90,6 +90,9 @@ implements IGunOperator {
     private NPCTemplate template;
     private Set<EntityType<?>> hostileTypes;
     private int meleeCooldown;
+    private static final EntityDataAccessor<Optional<java.util.UUID>> COMPANION_OWNER=SynchedEntityData.defineId(AutoGunOperator.class,EntityDataSerializers.OPTIONAL_UUID);
+    public java.util.UUID syncedCompanionOwner(){return this.entityData.get(COMPANION_OWNER).orElse(null);}
+    public void syncCompanionOwner(java.util.UUID owner){this.entityData.set(COMPANION_OWNER,Optional.ofNullable(owner));}
     private static final EntityDataAccessor<CompoundTag> SYNCED_SKIN = SynchedEntityData.defineId(AutoGunOperator.class, (EntityDataSerializer)EntityDataSerializers.COMPOUND_TAG);
     private final LivingEntity tacz$shooter = this;
     public final ShooterDataHolder tacz$data = new ShooterDataHolder();
@@ -157,29 +160,30 @@ implements IGunOperator {
 
         // Movement and look locks belong to ONE selector. Lower numbers win.
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new mod.cdv.tnpc.entity.goal.EscapeUnknownDamageGoal(this));
-        this.goalSelector.addGoal(2, new AvoidWhileReloadingGoal(this, 12.0f, 1.25));
-        this.goalSelector.addGoal(3, this.fireAtNearestTargetGoal);
-        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0, false) {
+        this.goalSelector.addGoal(2, new mod.cdv.tnpc.entity.goal.EscapeUnknownDamageGoal(this));
+        this.goalSelector.addGoal(4, new AvoidWhileReloadingGoal(this, 12.0f, 1.25));
+        this.goalSelector.addGoal(5, this.fireAtNearestTargetGoal);
+        this.goalSelector.addGoal(6, new MeleeAttackGoal(this, 1.0, false) {
             @Override
             public boolean canUse() {
-                return !fireAtNearestTargetGoal.isHoldingGun() && super.canUse();
+                return !fireAtNearestTargetGoal.isHoldingGun() && getTarget()!=null && mod.cdv.tnpc.companion.CompanionCombat.permits(AutoGunOperator.this,getTarget()) && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !fireAtNearestTargetGoal.isHoldingGun() && super.canContinueToUse();
+                return !fireAtNearestTargetGoal.isHoldingGun() && getTarget()!=null && mod.cdv.tnpc.companion.CompanionCombat.permits(AutoGunOperator.this,getTarget()) && super.canContinueToUse();
             }
 
             @Override
             protected boolean canPerformAttack(LivingEntity entity) {
-                return !fireAtNearestTargetGoal.isHoldingGun() && super.canPerformAttack(entity);
+                return !fireAtNearestTargetGoal.isHoldingGun() && mod.cdv.tnpc.companion.CompanionCombat.permits(AutoGunOperator.this,entity) && super.canPerformAttack(entity);
             }
         });
-        this.goalSelector.addGoal(5, new mod.cdv.tnpc.entity.goal.ConversationGoal(this));
-        this.goalSelector.addGoal(6, new mod.cdv.tnpc.companion.CompanionGoal(this));
-        this.goalSelector.addGoal(7, new RestAtPoiGoal(this));
-        this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 1.0) {
+        this.goalSelector.addGoal(1, new mod.cdv.tnpc.entity.goal.ConversationGoal(this));
+        this.goalSelector.addGoal(3, new mod.cdv.tnpc.companion.CatchUpGoal(this));
+        this.goalSelector.addGoal(7, new mod.cdv.tnpc.companion.CompanionGoal(this));
+        this.goalSelector.addGoal(8, new RestAtPoiGoal(this));
+        this.goalSelector.addGoal(9, new WaterAvoidingRandomStrollGoal(this, 1.0) {
             @Override
             public boolean canUse() {
                 return getTarget() == null && super.canUse();
@@ -211,11 +215,11 @@ implements IGunOperator {
             public boolean canUse() {
                 LivingEntity attacker = this.mob.getLastHurtByMob();
                 return attacker != null && attacker != AutoGunOperator.this
-                    && !AutoGunOperator.this.isAlliedTo(attacker) && super.canUse();
+                    && !AutoGunOperator.this.isAlliedTo(attacker) && mod.cdv.tnpc.companion.CompanionCombat.permits(AutoGunOperator.this,attacker) && super.canUse();
             }
             @Override public boolean canContinueToUse() {
                 LivingEntity target = this.mob.getTarget();
-                return target != null && !AutoGunOperator.this.isAlliedTo(target) && super.canContinueToUse();
+                return target != null && !AutoGunOperator.this.isAlliedTo(target) && mod.cdv.tnpc.companion.CompanionCombat.permits(AutoGunOperator.this,target) && super.canContinueToUse();
             }
         });
         this.targetSelector.addGoal(2, new mod.cdv.tnpc.entity.goal.PerceptionTargetGoal(this));
@@ -255,6 +259,7 @@ implements IGunOperator {
 
     @Override
     public void setTarget(@javax.annotation.Nullable LivingEntity target) {
+        if(target!=null && !mod.cdv.tnpc.companion.CompanionCombat.permits(this,target))return;
         LivingEntity before = this.getTarget();
         super.setTarget(target);
         if (this.getTarget() != before) this.relationshipTargetWasHostile = this.getTarget() != null && this.isOpposedTo(this.getTarget());
@@ -346,7 +351,7 @@ implements IGunOperator {
 
     @Override
     protected net.minecraft.world.InteractionResult mobInteract(net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
-        if (hand == net.minecraft.world.InteractionHand.MAIN_HAND && !player.isShiftKeyDown()) {
+        if ((hand == net.minecraft.world.InteractionHand.MAIN_HAND || player.getUUID().equals(mod.cdv.tnpc.companion.Companions.owner(this))) && !player.isShiftKeyDown()) {
             if (this.level().isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 net.minecraft.world.InteractionResult result = mod.cdv.tnpc.dialogue.NpcConversations.interact(this, serverPlayer);
@@ -376,7 +381,7 @@ implements IGunOperator {
         if (!this.level().isClientSide && (this.getTarget() != null || this.isOnFire())) this.becomeAlert();
         super.tick();
         this.onTickServerSide();
-        if (this.hasMelee()) {
+        if (this.hasMelee() && (this.getTarget()==null || mod.cdv.tnpc.companion.CompanionCombat.permits(this,this.getTarget()))) {
             if (this.getTarget() != null && this.distanceToSqr((Entity)this.getTarget()) <= 4.0) {
                 this.lookAt((Entity)this.getTarget(), 15.0f, 15.0f);
             }
@@ -396,6 +401,7 @@ implements IGunOperator {
 
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        builder.define(COMPANION_OWNER,Optional.empty());
         CompoundTag tag = new CompoundTag();
         tag.putString("texture", NPCTemplate.DEFAULT_SKIN.texture());
         tag.putBoolean("slim", NPCTemplate.DEFAULT_SKIN.slim());
@@ -568,13 +574,22 @@ implements IGunOperator {
     }
 
     public int getStateRangedCooldown() {
-        return mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(this.templateId).weapon(combatGunType())
-            .burstPauseTicks().sample(this.random::nextInt);
+        var profile=mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(this.templateId);
+        return profile.modifier(combatGunId()).burstPauseTicks(profile.weapon(combatGunType())
+            .burstPauseTicks().sample(this.random::nextInt));
     }
 
     public int getStateBurst() {
-        return mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(this.templateId).weapon(combatGunType())
-            .burstShots().sample(this.random::nextInt);
+        var profile=mod.cdv.tnpc.data.NpcBehaviorConfig.combatFor(this.templateId);
+        return profile.modifier(combatGunId()).burstShots(profile.weapon(combatGunType())
+            .burstShots().sample(this.random::nextInt));
+    }
+
+    /** TaCZ GunId distinguishes guns sharing the modern_kinetic_gun item. */
+    public String combatGunId() {
+        var stack=getMainHandItem();
+        if(!(stack.getItem() instanceof com.tacz.guns.api.item.IGun gun))return null;
+        var id=gun.getGunId(stack);return id==null ? null : id.toString();
     }
 
     protected void reduceAmmo(ItemStack currentGunItem, ModernKineticGunItem gunitem) {
@@ -592,6 +607,10 @@ implements IGunOperator {
                 gunitem.reduceCurrentAmmoCount(currentGunItem);
             }
         }
+    }
+
+    public void pauseCompanionCombat() {
+        this.setTarget(null);this.getNavigation().stop();this.setAggressive(false);this.aim(false);this.tacz$reload.cancelReload();
     }
 
     public void refreshOrderedEquipment() {

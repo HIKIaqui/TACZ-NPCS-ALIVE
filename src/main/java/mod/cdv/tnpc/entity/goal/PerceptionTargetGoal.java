@@ -8,11 +8,11 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 public final class PerceptionTargetGoal extends NearestAttackableTargetGoal<LivingEntity> {
     private final AutoGunOperator npc;
     public PerceptionTargetGoal(AutoGunOperator npc) {
-        super(npc, LivingEntity.class, true, target -> npc.getTemplate() != null && npc.isOpposedTo(target));
+        super(npc, LivingEntity.class, true, target -> npc.getTemplate() != null && mod.cdv.tnpc.companion.CompanionCombat.acquires(npc,target));
         this.npc = npc;
     }
     @Override public boolean canContinueToUse() {
-        return npc.getTarget() != null && npc.isOpposedTo(npc.getTarget()) && super.canContinueToUse();
+        return npc.getTarget() != null && mod.cdv.tnpc.companion.CompanionCombat.acquires(npc,npc.getTarget()) && super.canContinueToUse();
     }
     @Override protected void findTarget() {
         double range = npc.getDetectionRange();

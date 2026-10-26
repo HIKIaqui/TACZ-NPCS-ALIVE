@@ -25,7 +25,7 @@ public final class NpcKillReputation {
         var data=ReputationData.get(player.server);int before=data.personal(player.getUUID(),npc.getUUID());
         int after=ReputationData.add(before,-5);data.personal(player.getUUID(),npc.getUUID(),after);
         if(tolerated) { if(npc.getTarget()==player) npc.setTarget(null); }
-        else if(npc.isAlive()) npc.setTarget(player);
+        else if(npc.isAlive()) { if(mod.cdv.tnpc.companion.Companions.owns(npc,player))mod.cdv.tnpc.companion.Companions.dismiss(npc);npc.setTarget(player); }
         if(after<before) NpcInventoryTrades.message(player,"Personal reputation ("+npc.getDisplayName().getString()+") "+(after-before));
     }
     @SubscribeEvent(priority=EventPriority.LOWEST)

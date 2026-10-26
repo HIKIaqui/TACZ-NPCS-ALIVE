@@ -19,7 +19,7 @@ public class AlertEnemiesGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return this.op.getTemplate() != null;
+        return this.op.getTemplate() != null && (!mod.cdv.tnpc.companion.Companions.active(op) || (!mod.cdv.tnpc.companion.CompanionCombat.defensive(op) && !mod.cdv.tnpc.dialogue.NpcConversations.holdingCompanionCombat(op) && !mod.cdv.tnpc.companion.CompanionCombat.catchingUp(op)));
     }
 
     @Override
