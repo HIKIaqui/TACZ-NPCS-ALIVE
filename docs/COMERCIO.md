@@ -58,11 +58,11 @@ Dentro de `defaults` ou de cada entrada de `loadouts`, use:
 
 ```json
 "reputationPricePercent": {
-  "neutro": 0,
-  "odiado": 25,
-  "amigavel": -5,
-  "aliado": -10,
-  "idolizado": -20
+  "neutral": 0,
+  "hated": 25,
+  "friendly": -5,
+  "allied": -10,
+  "idolized": -20
 }
 ```
 

@@ -1,1 +1,11 @@
-{"defaults":{"enabled":true,"personalReward":5,"factionReward":0,"cooldownTicks":24000,"minimumReputation":-49},"loadouts":{}}
+{
+  "defaults": {
+    "enabled": true,
+    "personalReward": 5,
+    "factionReward": 0,
+    "cooldownTicks": 24000,
+    "minimumReputation": -49,
+    "currencyRewardMultiplier": 1.5
+  },
+  "loadouts": {}
+}

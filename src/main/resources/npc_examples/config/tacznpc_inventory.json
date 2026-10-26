@@ -8,13 +8,13 @@
     "maxCargoSlots": 15,
     "pickupRetryTicks": 100,
     "reputationPricePercent": {
-      "vilanizado": 100,
-      "hostil": 50,
-      "odiado": 25,
-      "neutro": 0,
-      "amigavel": -5,
-      "aliado": -10,
-      "idolizado": -20
+      "villainized": 100,
+      "hostile": 50,
+      "hated": 25,
+      "neutral": 0,
+      "friendly": -5,
+      "allied": -10,
+      "idolized": -20
     }
   },
   "loadouts": {

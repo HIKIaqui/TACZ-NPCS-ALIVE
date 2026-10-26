@@ -38,6 +38,7 @@ public class AlertAlliesGoal extends TargetGoal {
         for (LivingEntity ally : this.op.level().getNearbyEntities(LivingEntity.class, this.allyConditions, this.op, area)) {
             if (ally == this.op || !this.op.isAlliedTo(ally)) continue;
             LivingEntity attacker = ally.getLastHurtByMob();
+            if (ally instanceof AutoGunOperator victim && attacker != null && victim.isAlliedTo(attacker)) continue;
             int damageAge = ally.tickCount - ally.getLastHurtByMobTimestamp();
             if (damageAge < 0 || damageAge > DAMAGE_MEMORY_TICKS || attacker == this.op
                 || attacker == null || !attacker.isAlive() || this.op.isAlliedTo(attacker)

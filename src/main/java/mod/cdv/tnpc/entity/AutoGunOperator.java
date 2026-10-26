@@ -177,8 +177,9 @@ implements IGunOperator {
             }
         });
         this.goalSelector.addGoal(5, new mod.cdv.tnpc.entity.goal.ConversationGoal(this));
-        this.goalSelector.addGoal(6, new RestAtPoiGoal(this));
-        this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0) {
+        this.goalSelector.addGoal(6, new mod.cdv.tnpc.companion.CompanionGoal(this));
+        this.goalSelector.addGoal(7, new RestAtPoiGoal(this));
+        this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 1.0) {
             @Override
             public boolean canUse() {
                 return getTarget() == null && super.canUse();
@@ -267,7 +268,13 @@ implements IGunOperator {
 
     @Override
     public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        var attacker=source.getEntity();
+        boolean tolerated=!this.level().isClientSide && attacker instanceof net.minecraft.server.level.ServerPlayer player
+            && mod.cdv.tnpc.reputation.ReputationConfig.settings().allied(mod.cdv.tnpc.reputation.ReputationAccess.effective(this,player));
         boolean accepted = super.hurt(source, amount);
+        // Vanilla records its revenge attacker after damage callbacks. Forget a forgiven hit
+        // even if that hit's personal penalty moved the relationship below allied.
+        if(accepted && tolerated && this.getLastHurtByMob()==attacker) this.setLastHurtByMob(null);
         if (accepted && !this.level().isClientSide) this.becomeAlert();
         return accepted;
     }
@@ -362,7 +369,7 @@ implements IGunOperator {
     }
 
     public void tick() {
-        if (!this.level().isClientSide) refreshRelationshipTarget();
+        if (!this.level().isClientSide) { refreshRelationshipTarget(); mod.cdv.tnpc.companion.Companions.tick(this); }
         if (this.level() instanceof ServerLevel serverLevel) mod.cdv.tnpc.quest.NpcQuests.tick(this, serverLevel);
         if (this.level() instanceof ServerLevel serverLevel) this.offlineActions.tick(this, serverLevel);
         if (this.isRemoved()) return;
@@ -584,6 +591,15 @@ implements IGunOperator {
             } else {
                 gunitem.reduceCurrentAmmoCount(currentGunItem);
             }
+        }
+    }
+
+    public void refreshOrderedEquipment() {
+        this.drawn=false;
+        this.updateCacheProperty(null);
+        if(this.fireAtNearestTargetGoal!=null) {
+            this.fireAtNearestTargetGoal.gunState=mod.cdv.tnpc.entity.goal.FireAtNearestTargetGoal.GunState.EMPTY;
+            this.fireAtNearestTargetGoal.targetChanged(null);
         }
     }
 

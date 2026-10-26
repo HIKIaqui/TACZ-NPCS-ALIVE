@@ -15,14 +15,14 @@ public final class NpcQuests {
     public static void tick(AutoGunOperator npc, ServerLevel level) {
         var settings = QuestConfig.settings();
         if (npc.getQuestState().appliedSettings() != settings) applyHealth(npc, true);
-        if (!settings.enabled() || !npc.isAlive() || npc.isNoAi()) return;
+        if (!settings.enabled() || !npc.isAlive() || npc.isNoAi() || mod.cdv.tnpc.companion.Companions.active(npc)) return;
         // Spread checks across NPCs. No global entity scan and no per-tick world queries.
         int offset = Math.floorMod(npc.getUUID().hashCode(), settings.checkIntervalTicks());
         if (Math.floorMod((long)npc.tickCount + offset, settings.checkIntervalTicks()) == 0) check(npc, level);
     }
     public static boolean check(AutoGunOperator npc, ServerLevel level) {
         var settings = QuestConfig.settings(); var state = npc.getQuestState();
-        if (!settings.enabled() || !npc.isAlive()) return false;
+        if (!settings.enabled() || !npc.isAlive() || mod.cdv.tnpc.companion.Companions.active(npc)) return false;
         long now = level.getServer().overworld().getGameTime();
         if (state.active() == null && now < state.nextAssignmentAt()) return false;
         var definitions = settings.quests().values().stream().filter(q -> q.enabled()

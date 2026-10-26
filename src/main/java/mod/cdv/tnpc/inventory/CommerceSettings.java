@@ -13,9 +13,9 @@ public final class CommerceSettings {
     public record Currency(String item,long value) {}
     public static final List<Currency> DEFAULT_CURRENCIES=List.of(new Currency("minecraft:emerald",1),
         new Currency("minecraft:emerald_block",60),new Currency("minecraft:netherite_block",3600));
-    public static final Map<String,BigDecimal> DEFAULT_PERCENT=Map.of("vilanizado",new BigDecimal("100"),
-        "hostil",new BigDecimal("50"),"odiado",new BigDecimal("25"),"neutro",BigDecimal.ZERO,
-        "amigavel",new BigDecimal("-5"),"aliado",new BigDecimal("-10"),"idolizado",new BigDecimal("-20"));
+    public static final Map<String,BigDecimal> DEFAULT_PERCENT=Map.of("villainized",new BigDecimal("100"),
+        "hostile",new BigDecimal("50"),"hated",new BigDecimal("25"),"neutral",BigDecimal.ZERO,
+        "friendly",new BigDecimal("-5"),"allied",new BigDecimal("-10"),"idolized",new BigDecimal("-20"));
     public static List<Currency> currencies(JsonObject root) {
         if(!root.has("commerce")) return DEFAULT_CURRENCIES;
         var o=root.getAsJsonObject("commerce"); keys(o,Set.of("currencies"));
@@ -36,13 +36,16 @@ public final class CommerceSettings {
     public static Map<String,BigDecimal> percentages(JsonObject o,Map<String,BigDecimal> fallback) {
         if(!o.has("reputationPricePercent")) return fallback;
         Map<String,BigDecimal> values=new HashMap<>(fallback);
+        Set<String> seen=new HashSet<>();
         for(var e:o.getAsJsonObject("reputationPricePercent").entrySet()) {
-            if(!DEFAULT_PERCENT.containsKey(e.getKey()) || !e.getValue().isJsonPrimitive() || !e.getValue().getAsJsonPrimitive().isNumber())
+            String tier=ReputationConfig.canonicalTier(e.getKey());
+            if(!seen.add(tier)) throw new IllegalArgumentException("Duplicate reputation price tier: "+tier);
+            if(!DEFAULT_PERCENT.containsKey(tier) || !e.getValue().isJsonPrimitive() || !e.getValue().getAsJsonPrimitive().isNumber())
                 throw new IllegalArgumentException("Unknown/non-numeric price tier: "+e.getKey());
             BigDecimal n=e.getValue().getAsBigDecimal();
             if(n.compareTo(new BigDecimal("-100"))<=0 || n.compareTo(new BigDecimal("10000"))>0 || n.scale()>4)
                 throw new IllegalArgumentException("Price percent must be > -100 and <= 10000, at most four decimal places");
-            values.put(e.getKey(),n);
+            values.put(tier,n);
         }
         return Map.copyOf(values);
     }

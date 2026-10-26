@@ -5,6 +5,13 @@ import java.util.function.ToDoubleFunction;
 
 /** The mean is calculated before removing stocked candidates. */
 public final class RequestSelection {
+    public static int reputation(int base,double mean,double weight) {
+        return (int)Math.min(1_000_000_000L,(long)base+(long)Math.floor(Math.max(0,weight-mean)));
+    }
+    public static long rewardValue(int base,int count,java.math.BigDecimal multiplier) {
+        return java.math.BigDecimal.valueOf(base).multiply(java.math.BigDecimal.valueOf(count)).multiply(multiplier)
+            .setScale(0,java.math.RoundingMode.FLOOR).longValueExact();
+    }
     public static double mean(double[] weights) {
         double total=0; int count=0;
         for(double w:weights) if(Double.isFinite(w) && w>0) { total+=w; count++; }

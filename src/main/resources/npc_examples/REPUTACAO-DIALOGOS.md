@@ -14,22 +14,22 @@ O arquivo de saudações contém:
 {
   "enabled": true,
   "defaults": {
-    "vilanizado": ["After everything you've done? Get out of my sight."],
-    "hostil": ["You have a lot of nerve showing up here."],
-    "odiado": ["Make it quick. I'm not in the mood."],
-    "neutro": [],
-    "amigavel": ["Good to see you again. Need something?"],
-    "aliado": ["There you are, friend.", "Always good to have you around."],
-    "idolizado": ["For you? I'll always make time."]
+    "villainized": ["After everything you've done? Get out of my sight."],
+    "hostile": ["You have a lot of nerve showing up here."],
+    "hated": ["Make it quick. I'm not in the mood."],
+    "neutral": [],
+    "friendly": ["Good to see you again. Need something?"],
+    "allied": ["There you are, friend.", "Always good to have you around."],
+    "idolized": ["For you? I'll always make time."]
   },
   "factions": {
     "military": {
-      "aliado": ["Good to see you. We've got your back."]
+      "allied": ["Good to see you. We've got your back."]
     }
   },
   "loadouts": {
     "scientists": {
-      "aliado": ["A familiar face. I could use a second opinion."]
+      "allied": ["A familiar face. I could use a second opinion."]
     }
   }
 }

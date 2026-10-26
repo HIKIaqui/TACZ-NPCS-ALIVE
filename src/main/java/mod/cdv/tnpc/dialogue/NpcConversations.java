@@ -104,6 +104,7 @@ public final class NpcConversations {
                 greetings.select(npc.getTemplateId(),npc.getFactionId(),
                     mod.cdv.tnpc.reputation.ReputationAccess.effective(npc,player),npc.getRandom()::nextInt));
             json = mod.cdv.tnpc.requests.NpcRequests.decorate(json,npc,player);
+            json = mod.cdv.tnpc.companion.Companions.decorate(json,npc,player);
             AdmDialogueApi.registerDialogue(dialogue, json);
         } catch (RuntimeException failure) {
             AdmDialogueApi.unregisterDialogue(dialogue);
@@ -198,10 +199,17 @@ public final class NpcConversations {
             if (talk != null && talk.player() == event.getPlayer()) close(talk);
             return;
         }
+        if(event.getChoice().id().startsWith("tnpc_companion_")) {
+            event.setCanceled(true);
+            boolean accepted=mod.cdv.tnpc.companion.Companions.order(npc,event.getPlayer(),event.getChoice().id());
+            mod.cdv.tnpc.inventory.NpcInventoryTrades.message(event.getPlayer(),accepted ? "Understood." : "Could not carry out that order. Check the held item, inventory space, or reopen the conversation.");
+            if(accepted) close(talk);
+            return;
+        }
         if(event.getChoice().id().startsWith("tnpc_request_")) {
             event.setCanceled(true);
             boolean delivered=mod.cdv.tnpc.requests.NpcRequests.deliver(npc,event.getPlayer(),event.getChoice().id());
-            mod.cdv.tnpc.inventory.NpcInventoryTrades.message(event.getPlayer(),delivered ? "Supplies delivered. Thank you!" : "Could not deliver: check supplies, NPC capacity, or reopen the conversation.");
+            if(!delivered) mod.cdv.tnpc.inventory.NpcInventoryTrades.message(event.getPlayer(),"Could not deliver: check supplies, reward space, NPC capacity, or reopen the conversation.");
             if(delivered) close(talk);
             return;
         }

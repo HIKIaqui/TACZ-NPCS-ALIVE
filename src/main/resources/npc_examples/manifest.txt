@@ -36,3 +36,5 @@ COMERCIO.md
 
 PEDIDOS.md
 config/tacznpc_requests.json
+
+COMPANHIA.md

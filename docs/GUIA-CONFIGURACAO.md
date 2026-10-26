@@ -216,3 +216,7 @@ A partir do patch de interesses, carga nova tem 15 slots por padrão, configurá
 ## Comércio com moedas — atualização v0.1
 
 A loja dos NPCs agora é gerada exclusivamente pela carga real. Configure `basePrice` nos interesses, `reputationPricePercent` em `defaults`/`loadouts` e `commerce.currencies` na raiz de `tacznpc_inventory.json`. As antigas opções `genericTrades`, `factionTrades` e `tradeFile` não controlam mais essas lojas. Consulte `COMERCIO.md` para o formato completo e as regras de conversão.
+
+## Pedidos por interesses — v0.1
+
+A opção `Need help with something?` agora oferece pedidos derivados dos interesses do loadout. Configuração de recompensa, habilitação e intervalo em `config/tacznpc_requests.json`; regras e exemplos em `PEDIDOS.md`. A carga, o equipamento e os limites fixos de estoque 8/1 determinam os candidatos. Abaixo da média de interesse fica fora; entre os demais, o peso de sorteio é média/interesse.

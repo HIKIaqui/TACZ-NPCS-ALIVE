@@ -56,6 +56,7 @@ public final class OfflineActions {
     }
     public void tick(AutoGunOperator npc, ServerLevel level) {
         observe(npc, level);
+        if(mod.cdv.tnpc.companion.Companions.active(npc)) return;
         if (!pending || !npc.isAlive() || npc.isNoAi() || !OfflineConfig.forLoadout(npc.getTemplateId()).enabled()) return;
         if (delay-- > 0) return;
         delay = 20;

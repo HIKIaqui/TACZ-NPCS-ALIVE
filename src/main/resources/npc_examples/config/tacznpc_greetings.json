@@ -1,26 +1,26 @@
 {
   "enabled": true,
   "defaults": {
-    "vilanizado": [
+    "villainized": [
       "After everything you've done? Get out of my sight."
     ],
-    "hostil": [
+    "hostile": [
       "You have a lot of nerve showing up here."
     ],
-    "odiado": [
+    "hated": [
       "Make it quick. I'm not in the mood.",
       "What do you want this time?"
     ],
-    "neutro": [],
-    "amigavel": [
+    "neutral": [],
+    "friendly": [
       "Good to see you again. Need something?",
       "Hey, glad you're still in one piece."
     ],
-    "aliado": [
+    "allied": [
       "There you are, friend. What can I do for you?",
       "Always good to have you around."
     ],
-    "idolizado": [
+    "idolized": [
       "For you? I'll always make time.",
       "If anyone can get us through this, it's you."
     ]

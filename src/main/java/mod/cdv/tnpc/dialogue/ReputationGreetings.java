@@ -9,7 +9,7 @@ import mod.cdv.tnpc.reputation.ReputationConfig;
 
 /** Immutable greeting alternatives; a single selected line belongs to one conversation snapshot. */
 public final class ReputationGreetings {
-    public static final Set<String> TIERS = Set.of("vilanizado","hostil","odiado","neutro","amigavel","aliado","idolizado");
+    public static final Set<String> TIERS = Set.of("villainized","hostile","hated","neutral","friendly","allied","idolized");
     public record Settings(boolean enabled, Map<String,List<String>> defaults,
                            Map<String,Map<String,List<String>>> factions,
                            Map<String,Map<String,List<String>>> loadouts) {
@@ -35,13 +35,13 @@ public final class ReputationGreetings {
         {
           "enabled": true,
           "defaults": {
-            "vilanizado": ["After everything you've done? Get out of my sight."],
-            "hostil": ["You have a lot of nerve showing up here."],
-            "odiado": ["Make it quick. I'm not in the mood.", "What do you want this time?"],
-            "neutro": [],
-            "amigavel": ["Good to see you again. Need something?", "Hey, glad you're still in one piece."],
-            "aliado": ["There you are, friend. What can I do for you?", "Always good to have you around."],
-            "idolizado": ["For you? I'll always make time.", "If anyone can get us through this, it's you."]
+            "villainized": ["After everything you've done? Get out of my sight."],
+            "hostile": ["You have a lot of nerve showing up here."],
+            "hated": ["Make it quick. I'm not in the mood.", "What do you want this time?"],
+            "neutral": [],
+            "friendly": ["Good to see you again. Need something?", "Hey, glad you're still in one piece."],
+            "allied": ["There you are, friend. What can I do for you?", "Always good to have you around."],
+            "idolized": ["For you? I'll always make time.", "If anyone can get us through this, it's you."]
           },
           "factions": {},
           "loadouts": {}
@@ -68,8 +68,10 @@ public final class ReputationGreetings {
         return Map.copyOf(result);
     }
     private static Map<String,List<String>> tiers(JsonObject o) {
-        ReputationConfig.keys(o,TIERS); Map<String,List<String>> result=new TreeMap<>();
+        Map<String,List<String>> result=new TreeMap<>();
         for (var e:o.entrySet()) {
+            String tier=ReputationConfig.canonicalTier(e.getKey());
+            if(!TIERS.contains(tier) || result.containsKey(tier)) throw new IllegalArgumentException("Unknown/duplicate greeting tier: "+e.getKey());
             var value=e.getValue(); List<JsonElement> values=value.isJsonArray() ? value.getAsJsonArray().asList() : List.of(value);
             if (values.size()>128) throw new IllegalArgumentException("Too many greetings: "+e.getKey());
             List<String> lines=new ArrayList<>();
@@ -78,7 +80,7 @@ public final class ReputationGreetings {
                     throw new IllegalArgumentException("Invalid greeting: "+e.getKey());
                 lines.add(line.getAsString());
             }
-            result.put(e.getKey(),List.copyOf(lines));
+            result.put(tier,List.copyOf(lines));
         }
         return Map.copyOf(result);
     }

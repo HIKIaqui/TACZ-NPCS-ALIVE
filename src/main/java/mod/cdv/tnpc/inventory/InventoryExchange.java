@@ -39,7 +39,7 @@ public final class InventoryExchange {
         }
         return taken;
     }
-    private static boolean insertPlayer(List<ItemStack> slots, ItemStack incoming) {
+    public static boolean insertPlayer(List<ItemStack> slots, ItemStack incoming) {
         ItemStack remaining = incoming.copy();
         for (ItemStack stack : slots) if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, remaining)) {
             int count = Math.min(remaining.getCount(), Math.max(0, stack.getMaxStackSize() - stack.getCount()));

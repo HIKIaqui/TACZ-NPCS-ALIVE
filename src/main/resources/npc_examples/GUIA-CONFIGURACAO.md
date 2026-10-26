@@ -220,3 +220,7 @@ A loja dos NPCs agora é gerada exclusivamente pela carga real. Configure `baseP
 ## Pedidos por interesses — v0.1
 
 A opção `Need help with something?` agora oferece pedidos derivados dos interesses do loadout. Configuração de recompensa, habilitação e intervalo em `config/tacznpc_requests.json`; regras e exemplos em `PEDIDOS.md`. A carga, o equipamento e os limites fixos de estoque 8/1 determinam os candidatos. Abaixo da média de interesse fica fora; entre os demais, o peso de sorteio é média/interesse.
+
+## Companhia — v0.1
+
+NPCs aliados podem aceitar acompanhar o jogador pelo tópico `Want to travel with me?`. Enquanto vinculados, o líder recebe `Orders` com esperar/retomar, trocar equipamento e dispensar. O limiar usa `alliedAt` existente e reputação efetiva. Consulte `COMPANHIA.md` para movimento, inventário, persistência e pausa das rotinas autônomas.

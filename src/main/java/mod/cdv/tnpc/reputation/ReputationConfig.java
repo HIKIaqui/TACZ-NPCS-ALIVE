@@ -47,14 +47,27 @@ public final class ReputationConfig {
             throw new IllegalArgumentException("Require hostileAt < 0 < alliedAt and tradeMinimum > hostileAt");
         return result;
     }
+    /** Legacy config aliases only; all runtime identifiers use English. */
+    public static String canonicalTier(String id) {
+        return switch(id) {
+            case "vilanizado" -> "villainized";
+            case "hostil" -> "hostile";
+            case "odiado" -> "hated";
+            case "neutro" -> "neutral";
+            case "amigavel" -> "friendly";
+            case "aliado" -> "allied";
+            case "idolizado" -> "idolized";
+            default -> id;
+        };
+    }
     public static String tier(long value) {
-        if (value <= -100) return "vilanizado";
-        if (value <= -50) return "hostil";
-        if (value <= -25) return "odiado";
-        if (value < 25) return "neutro";
-        if (value < 50) return "amigavel";
-        if (value < 100) return "aliado";
-        return "idolizado";
+        if (value <= -100) return "villainized";
+        if (value <= -50) return "hostile";
+        if (value <= -25) return "hated";
+        if (value < 25) return "neutral";
+        if (value < 50) return "friendly";
+        if (value < 100) return "allied";
+        return "idolized";
     }
     public static int score(JsonElement e) {
         if (!e.isJsonPrimitive() || !e.getAsJsonPrimitive().isNumber()) throw new IllegalArgumentException("Reputation must be an integer");

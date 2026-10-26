@@ -34,6 +34,7 @@ public final class NpcTravel {
     }
 
     public static boolean eligible(AutoGunOperator npc, ServerLevel level) {
+        if(mod.cdv.tnpc.companion.Companions.active(npc)) return false;
         var p = OfflineConfig.forLoadout(npc.getTemplateId());
         var a = p.actions().get("move");
         var active = npc.getQuestState().active();
