@@ -41,7 +41,7 @@ public class AlertAlliesGoal extends TargetGoal {
             if (ally instanceof AutoGunOperator victim && attacker != null && victim.isAlliedTo(attacker)) continue;
             int damageAge = ally.tickCount - ally.getLastHurtByMobTimestamp();
             if (damageAge < 0 || damageAge > DAMAGE_MEMORY_TICKS || attacker == this.op
-                || attacker == null || !attacker.isAlive() || this.op.isAlliedTo(attacker)
+                || attacker == null || !mod.cdv.tnpc.companion.CompanionCombat.permits(this.op,attacker) || !attacker.isAlive() || this.op.isAlliedTo(attacker)
                 || !this.canAttack(attacker, ATTACKER_CONDITIONS)) continue;
             double distance = this.op.distanceToSqr(attacker);
             double followDistance = perception.enabled()

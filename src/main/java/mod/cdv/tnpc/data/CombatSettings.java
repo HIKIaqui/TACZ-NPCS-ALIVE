@@ -11,10 +11,29 @@ public final class CombatSettings {
     }
     public record Point(double distance, double spreadMultiplier) {}
     public record Weapon(Range shotIntervalTicks, Range burstShots, Range burstPauseTicks) {}
+    /** Percentages apply to sampled NPC values, never to native TaCZ RPM or gun data. */
+    public record Modifiers(double aimDistancePercent, double baseAimErrorDegreesPercent,
+                            double accuracyByDistancePercent, double shotIntervalTicksPercent,
+                            double burstShotsPercent, double burstPauseTicksPercent) {
+        public static final Modifiers IDENTITY = new Modifiers(100,100,100,100,100,100);
+        public double aimDistance(double base) { return base * aimDistancePercent / 100; }
+        public double aimErrorMultiplier() { return baseAimErrorDegreesPercent / 100 * accuracyByDistancePercent / 100; }
+        public int shotIntervalTicks(int sampled) { return scaled(sampled,shotIntervalTicksPercent,0); }
+        public int burstShots(int sampled) { return scaled(sampled,burstShotsPercent,1); }
+        public int burstPauseTicks(int sampled) { return scaled(sampled,burstPauseTicksPercent,0); }
+        private static int scaled(int value,double percent,int minimum) {
+            return Math.max(minimum,(int)Math.round(value * percent / 100));
+        }
+    }
     public record Profile(Range reactionTimeTicks, int targetMemoryTicks, double aimDistance,
                           double baseAimErrorDegrees, List<Point> accuracyByDistance,
-                          Weapon defaults, Map<String, Weapon> weapons) {
+                          Weapon defaults, Map<String, Weapon> weapons, Map<String, Modifiers> weaponModifiers) {
+        public Profile(Range reactionTimeTicks,int targetMemoryTicks,double aimDistance,double baseAimErrorDegrees,
+                       List<Point> accuracyByDistance,Weapon defaults,Map<String,Weapon> weapons) {
+            this(reactionTimeTicks,targetMemoryTicks,aimDistance,baseAimErrorDegrees,accuracyByDistance,defaults,weapons,Map.of());
+        }
         public Weapon weapon(String type) { return weapons.getOrDefault(type, defaults); }
+        public Modifiers modifier(String gunId) { return gunId == null ? Modifiers.IDENTITY : weaponModifiers.getOrDefault(gunId,Modifiers.IDENTITY); }
     }
     private static final Set<String> TYPES = Set.of("default", "pistol", "rifle", "sniper", "shotgun", "smg", "mg", "rpg");
     private static final Set<String> WEAPON_KEYS = Set.of("shotIntervalTicks", "burstShots", "burstPauseTicks");
@@ -25,6 +44,7 @@ public final class CombatSettings {
                               {"distance":35,"spreadMultiplier":2.5},{"distance":60,"spreadMultiplier":4}],
          "shotIntervalTicks":{"min":2,"max":4},"burstShots":{"min":1,"max":2},
          "burstPauseTicks":{"min":18,"max":36},
+         "weaponModifiers":{"tacz:minigun":{"burstShotsPercent":500,"shotIntervalTicksPercent":25}},
          "weapons":{
            "pistol":{"shotIntervalTicks":{"min":4,"max":8},"burstPauseTicks":{"min":16,"max":32}},
            "smg":{"shotIntervalTicks":{"min":2,"max":4},"burstShots":{"min":1,"max":3},"burstPauseTicks":{"min":20,"max":36}},
@@ -41,7 +61,7 @@ public final class CombatSettings {
     private CombatSettings() {}
     public static Profile parse(JsonObject o, Profile fallback) {
         keys(o, Set.of("reactionTimeTicks", "targetMemoryTicks", "aimDistance", "baseAimErrorDegrees",
-            "accuracyByDistance", "shotIntervalTicks", "burstShots", "burstPauseTicks", "weapons"));
+            "accuracyByDistance", "shotIntervalTicks", "burstShots", "burstPauseTicks", "weapons", "weaponModifiers"));
         Range reaction = range(o, "reactionTimeTicks", fallback.reactionTimeTicks(), 0, 1200);
         int memory = o.has("targetMemoryTicks") ? o.get("targetMemoryTicks").getAsBigDecimal().intValueExact() : fallback.targetMemoryTicks();
         if (memory < 0 || memory > 1200) throw new IllegalArgumentException("Invalid targetMemoryTicks");
@@ -69,7 +89,28 @@ public final class CombatSettings {
             Weapon inherited = weapon(o, fallback.weapon(type), false);
             weapons.put(type, overrides.has(type) ? weapon(overrides.getAsJsonObject(type), inherited, true) : inherited);
         }
-        return new Profile(reaction, memory, aim, error, points, defaults, Map.copyOf(weapons));
+        var modifiers = new HashMap<>(fallback.weaponModifiers());
+        if(o.has("weaponModifiers")) {
+            var entries=o.getAsJsonObject("weaponModifiers");
+            if(entries.size()>1024)throw new IllegalArgumentException("Too many weapon modifiers");
+            for(var entry:entries.entrySet()) {
+                String id=entry.getKey();
+                if(id.length()>256 || !id.matches("[a-z0-9_.-]+:[a-z0-9/._-]+"))
+                    throw new IllegalArgumentException("Invalid weapon GunId: "+id);
+                var m=entry.getValue().getAsJsonObject();
+                keys(m,Set.of("aimDistancePercent","baseAimErrorDegreesPercent","accuracyByDistancePercent",
+                    "shotIntervalTicksPercent","burstShotsPercent","burstPauseTicksPercent"));
+                var inherited=modifiers.getOrDefault(id,Modifiers.IDENTITY);
+                modifiers.put(id,new Modifiers(
+                    number(m,"aimDistancePercent",inherited.aimDistancePercent(),0,10000),
+                    number(m,"baseAimErrorDegreesPercent",inherited.baseAimErrorDegreesPercent(),0,10000),
+                    number(m,"accuracyByDistancePercent",inherited.accuracyByDistancePercent(),0,10000),
+                    number(m,"shotIntervalTicksPercent",inherited.shotIntervalTicksPercent(),0,10000),
+                    number(m,"burstShotsPercent",inherited.burstShotsPercent(),0,10000),
+                    number(m,"burstPauseTicksPercent",inherited.burstPauseTicksPercent(),0,10000)));
+            }
+        }
+        return new Profile(reaction, memory, aim, error, points, defaults, Map.copyOf(weapons),Map.copyOf(modifiers));
     }
     private static Weapon weapon(JsonObject o, Weapon fallback, boolean strict) {
         if (strict) keys(o, WEAPON_KEYS);

@@ -20,7 +20,7 @@ extends Goal {
     }
 
     public boolean canUse() {
-        return this.mob.getTarget() != null && this.isHoldingGun() && this.mob.distanceToSqr((Entity)this.mob.getTarget()) <= (double)this.minDistance;
+        return this.mob.getTarget() != null && mod.cdv.tnpc.companion.CompanionCombat.permits(mob,mob.getTarget()) && this.isHoldingGun() && this.mob.distanceToSqr((Entity)this.mob.getTarget()) <= (double)this.minDistance;
     }
 
     private boolean isHoldingGun() {
@@ -28,6 +28,7 @@ extends Goal {
     }
 
     public void tick() {
+        if(mob.getTarget()==null || !mod.cdv.tnpc.companion.CompanionCombat.permits(mob,mob.getTarget()))return;
         this.mob.getLookControl().setLookAt((Entity)this.mob.getTarget(), 30.0f, 30.0f);
         if (this.mob.getSensing().hasLineOfSight((Entity)this.mob.getTarget())) {
             if (this.cooldown == 0) {
