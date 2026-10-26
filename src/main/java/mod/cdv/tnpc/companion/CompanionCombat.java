@@ -66,6 +66,7 @@ public final class CompanionCombat {
         if(npc.level().isClientSide)return true; // Damage memory and combat authority live on the server.
         if(!Companions.active(npc))return true;
         if(!target.isAlive() || target.isRemoved() || target.level()!=npc.level())return false;
+        if(mod.cdv.tnpc.entity.ai.FriendlyFire.sameGroup(npc,target))return false;
         if(NpcConversations.holdingCompanionCombat(npc) || catchingUp(npc) || farFromLeader(npc))return false;
         if(!defensive(npc))return true;
         if(npc.isAlliedTo(target))return false;

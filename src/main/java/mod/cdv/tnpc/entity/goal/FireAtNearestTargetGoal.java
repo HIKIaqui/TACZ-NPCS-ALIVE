@@ -18,6 +18,7 @@ extends Goal {
     public static final UniformInt PATHFINDING_DELAY_RANGE = TimeUtil.rangeOfSeconds((int)1, (int)2);
     private final T mob;
     private final mod.cdv.tnpc.entity.ai.CombatMemory combat = new mod.cdv.tnpc.entity.ai.CombatMemory();
+    private long friendlyRetryAt;
     public mod.cdv.tnpc.entity.ai.CombatMemory combatMemory() { return combat; }
     public void targetChanged(LivingEntity target) {
         combat.acquired(target == null ? null : target.getUUID(), mob.level().getGameTime(),
@@ -155,11 +156,16 @@ extends Goal {
                     this.attackBurst = ((AutoGunOperator)(this.mob)).getStateBurst();
                 }
             } else if (this.gunState == GunState.READY_TO_ATTACK && combat.mayFire(livingentity.getUUID(), flag, now)) {
+                var friendly=profile.friendlyFire();
+                if(friendly.checkEnabled() && now<friendlyRetryAt)return;
                 var error = mod.cdv.tnpc.entity.ai.CombatAim.offset(profile, Math.sqrt(d0), mob.getRandom().nextDouble(), mob.getRandom().nextDouble(),
                     mod.cdv.tnpc.quest.QuestConfig.settings().progression().aimError().multiplier(
                         mod.cdv.tnpc.quest.NpcQuests.level(mob)) * modifier.aimErrorMultiplier());
                 float pitch = Math.max(-89.9f, Math.min(89.9f, mob.getViewXRot(1.0f) + error.pitch()));
                 float yaw = mob.getViewYRot(1.0f) + error.yaw();
+                if(mod.cdv.tnpc.entity.ai.FriendlyFire.blocked(mob,livingentity,pitch,yaw,friendly)) {
+                    friendlyRetryAt=now+friendly.retryTicks();return;
+                }
                 // Stable suppliers: repeated reads/pellets share the same NPC aim centre.
                 this.lastResult = mob.shoot(() -> pitch, () -> yaw);
                 if (this.lastResult == ShootResult.NOT_DRAW) {

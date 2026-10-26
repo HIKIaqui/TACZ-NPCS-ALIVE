@@ -27,10 +27,11 @@ public final class CombatSettings {
     }
     public record Profile(Range reactionTimeTicks, int targetMemoryTicks, double aimDistance,
                           double baseAimErrorDegrees, List<Point> accuracyByDistance,
-                          Weapon defaults, Map<String, Weapon> weapons, Map<String, Modifiers> weaponModifiers) {
+                          Weapon defaults, Map<String, Weapon> weapons, Map<String, Modifiers> weaponModifiers,
+                          FriendlyFireSettings friendlyFire) {
         public Profile(Range reactionTimeTicks,int targetMemoryTicks,double aimDistance,double baseAimErrorDegrees,
                        List<Point> accuracyByDistance,Weapon defaults,Map<String,Weapon> weapons) {
-            this(reactionTimeTicks,targetMemoryTicks,aimDistance,baseAimErrorDegrees,accuracyByDistance,defaults,weapons,Map.of());
+            this(reactionTimeTicks,targetMemoryTicks,aimDistance,baseAimErrorDegrees,accuracyByDistance,defaults,weapons,Map.of(),FriendlyFireSettings.DEFAULTS);
         }
         public Weapon weapon(String type) { return weapons.getOrDefault(type, defaults); }
         public Modifiers modifier(String gunId) { return gunId == null ? Modifiers.IDENTITY : weaponModifiers.getOrDefault(gunId,Modifiers.IDENTITY); }
@@ -44,6 +45,10 @@ public final class CombatSettings {
                               {"distance":35,"spreadMultiplier":2.5},{"distance":60,"spreadMultiplier":4}],
          "shotIntervalTicks":{"min":2,"max":4},"burstShots":{"min":1,"max":2},
          "burstPauseTicks":{"min":18,"max":36},
+         "friendlyFire":{"shotCheck":{"enabled":true,"corridorRadius":0.35,"retryTicks":4},
+           "damageReduction":{"enabled":true,"allies":{"enabled":true,"damagePercent":50},
+             "nearbyAllies":{"enabled":true,"withinBlocks":6,"damagePercent":25},
+             "companionGroup":{"enabled":true,"damagePercent":10}}},
          "weaponModifiers":{"tacz:minigun":{"burstShotsPercent":500,"shotIntervalTicksPercent":25}},
          "weapons":{
            "pistol":{"shotIntervalTicks":{"min":4,"max":8},"burstPauseTicks":{"min":16,"max":32}},
@@ -61,7 +66,7 @@ public final class CombatSettings {
     private CombatSettings() {}
     public static Profile parse(JsonObject o, Profile fallback) {
         keys(o, Set.of("reactionTimeTicks", "targetMemoryTicks", "aimDistance", "baseAimErrorDegrees",
-            "accuracyByDistance", "shotIntervalTicks", "burstShots", "burstPauseTicks", "weapons", "weaponModifiers"));
+            "accuracyByDistance", "shotIntervalTicks", "burstShots", "burstPauseTicks", "weapons", "weaponModifiers","friendlyFire"));
         Range reaction = range(o, "reactionTimeTicks", fallback.reactionTimeTicks(), 0, 1200);
         int memory = o.has("targetMemoryTicks") ? o.get("targetMemoryTicks").getAsBigDecimal().intValueExact() : fallback.targetMemoryTicks();
         if (memory < 0 || memory > 1200) throw new IllegalArgumentException("Invalid targetMemoryTicks");
@@ -110,7 +115,8 @@ public final class CombatSettings {
                     number(m,"burstPauseTicksPercent",inherited.burstPauseTicksPercent(),0,10000)));
             }
         }
-        return new Profile(reaction, memory, aim, error, points, defaults, Map.copyOf(weapons),Map.copyOf(modifiers));
+        var friendly=o.has("friendlyFire")?FriendlyFireSettings.parse(o.getAsJsonObject("friendlyFire"),fallback.friendlyFire()):fallback.friendlyFire();
+        return new Profile(reaction, memory, aim, error, points, defaults, Map.copyOf(weapons),Map.copyOf(modifiers),friendly);
     }
     private static Weapon weapon(JsonObject o, Weapon fallback, boolean strict) {
         if (strict) keys(o, WEAPON_KEYS);
